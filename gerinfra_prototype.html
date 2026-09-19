@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerinfra CIn-UFPE - Gestão de Manutenção Predial</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SortableJS for Kanban Drag and Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <!-- Tailwind Custom Brand Colors (CIn-UFPE Bordeaux #7a0016) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cinRed: '#7a0016',
+                        cinDarkRed: '#5c0010',
+                        cinBlack: '#231F20',
+                        cinGray: '#F4F5F7',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #f1f5f9;
+            border: 2px dashed #7a0016;
+        }
+        .sortable-drag {
+            cursor: grabbing !important;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15);
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .fade-in {
+            animation: fadeIn 0.25s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-cinBlack antialiased flex flex-col min-h-screen">
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-cinBlack via-gray-900 to-cinDarkRed flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-t-4 border-cinRed fade-in">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-cinRed rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl shadow-lg">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Gerinfra CIn-UFPE</h1>
+                <p class="text-sm text-gray-500 mt-1">Sistema de Gestão de Manutenção Predial</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">E-mail Institucional</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                            <i class="fa-solid fa-envelope text-sm"></i>
+                        </span>
+                        <input type="email" id="login-email" required value="usuario@cin.ufpe.br" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cinRed focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="login-password" required value="123456" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cinRed focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Perfil de Acesso na Demonstração</label>
+                    <select id="login-role" onchange="toggleTeamSelect()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cinRed focus:outline-none transition font-medium">
+                        <option value="solicitante">🙋‍♂️ Solicitante (Servidor / Aluno)</option>
+                        <option value="gerente">👨‍💼 Gestor Gerinfra</option>
+                        <option value="equipe">👷 Equipe Operacional de Manutenção</option>
+                    </select>
+                </div>
+
+                <div id="team-select-container" class="hidden">
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Especialidade da Equipe</label>
+                    <select id="login-team" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cinRed focus:outline-none transition font-medium">
+                        <option value="Elétrica">⚡ Equipe de Elétrica</option>
+                        <option value="Hidráulica">💧 Equipe de Hidráulica</option>
+                        <option value="Refrigeração">❄️ Equipe de Refrigeração (Ar-condicionado)</option>
+                        <option value="TI / Rede">💻 Equipe de T.I. / Rede</option>
+                        <option value="Mobiliário">🪑 Equipe de Mobiliário</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-cinRed hover:bg-cinDarkRed text-white font-bold py-3.5 rounded-lg shadow-md transition duration-200 mt-2">
+                    Entrar no Sistema
+                </button>
+            </form>
+            
+            <p class="text-xs text-center text-gray-400 mt-6">Centro de Informática - Universidade Federal de Pernambuco</p>
+        </div>
+    </div>
+
+    <!-- HEADER PRINCIPAL -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-cinRed flex items-center justify-center text-white font-bold shadow-md">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-900 leading-tight" id="header-user-name">Gerinfra CIn</h2>
+                    <p class="text-xs text-gray-500 font-medium" id="header-user-role-badge">Perfil: Solicitante</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="logout()" class="text-xs font-semibold px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair / Trocar Perfil
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER PRINCIPAL DAS VISÕES -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- ========================================================== -->
+        <!-- VISÃO 1: SOLICITANTE -->
+        <!-- ========================================================== -->
+        <div id="view-solicitante" class="hidden space-y-6 fade-in">
+            <div class="flex bg-gray-200 p-1 rounded-xl max-w-md mx-auto sm:mx-0 shadow-inner">
+                <button onclick="switchTab('solicitante', 'novo')" id="tab-sol-novo" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition">Novo Chamado</button>
+                <button onclick="switchTab('solicitante', 'lista')" id="tab-sol-lista" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition">Meus Chamados & Retornos</button>
+            </div>
+
+            <!-- Aba Novo Chamado -->
+            <div id="content-sol-novo" class="max-w-2xl bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-cinRed"></i> Abrir Nova Solicitação de Manutenção
+                </h3>
+                
+                <form onsubmit="createTicket(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Localização Específica</label>
+                        <input type="text" id="ticket-location" required placeholder="Ex: Lab de Graduação 2, Sala 304, Bloco A" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Categoria do Problema</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="ticket-type" value="Elétrica" checked class="peer sr-only">
+                                <div class="p-3 border rounded-xl text-center peer-checked:border-cinRed peer-checked:bg-red-50 peer-checked:text-cinRed hover:bg-gray-50 transition">
+                                    <i class="fa-solid fa-bolt mb-1 text-base block"></i>
+                                    <span class="text-xs font-bold">Elétrica</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="ticket-type" value="Hidráulica" class="peer sr-only">
+                                <div class="p-3 border rounded-xl text-center peer-checked:border-cinRed peer-checked:bg-red-50 peer-checked:text-cinRed hover:bg-gray-50 transition">
+                                    <i class="fa-solid fa-faucet-drip mb-1 text-base block"></i>
+                                    <span class="text-xs font-bold">Hidráulica</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="ticket-type" value="Refrigeração" class="peer sr-only">
+                                <div class="p-3 border rounded-xl text-center peer-checked:border-cinRed peer-checked:bg-red-50 peer-checked:text-cinRed hover:bg-gray-50 transition">
+                                    <i class="fa-solid fa-snowflake mb-1 text-base block"></i>
+                                    <span class="text-xs font-bold">Refrigeração</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="ticket-type" value="Mobiliário" class="peer sr-only">
+                                <div class="p-3 border rounded-xl text-center peer-checked:border-cinRed peer-checked:bg-red-50 peer-checked:text-cinRed hover:bg-gray-50 transition">
+                                    <i class="fa-solid fa-chair mb-1 text-base block"></i>
+                                    <span class="text-xs font-bold">Mobiliário</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Nível de Urgência Estimado</label>
+                        <select id="ticket-urgency" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-cinRed focus:outline-none">
+                            <option value="urgente">🔥 Urgente (Risco imediato ou parada total)</option>
+                            <option value="moderado" selected>⚠️ Moderado (Afeta rotina parcialmente)</option>
+                            <option value="leve">ℹ️ Leve / Rotina (Estético ou menor)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Descrição Detalhada</label>
+                        <textarea id="ticket-desc" required rows="3" placeholder="Descreva o que está ocorrendo..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cinRed focus:outline-none resize-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Foto / Anexo (Opcional)</label>
+                        <input type="file" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-red-50 file:text-cinRed hover:file:bg-red-100 transition cursor-pointer">
+                    </div>
+
+                    <button type="submit" class="w-full bg-cinRed hover:bg-cinDarkRed text-white font-bold py-3.5 rounded-xl shadow-md transition">
+                        Enviar Chamado Imediatamente
+                    </button>
+                </form>
+            </div>
+
+            <!-- Aba Meus Chamados -->
+            <div id="content-sol-lista" class="hidden space-y-4 max-w-3xl">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-900 text-lg">Histórico de Solicitações</h3>
+                    <span class="text-xs text-gray-500 italic">Clique no chamado para ver retornos e mensagens</span>
+                </div>
+                <div id="solicitante-tickets-container" class="space-y-3">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VISÃO 2: GERENTE GERINFRA -->
+        <!-- ========================================================== -->
+        <div id="view-gerente" class="hidden space-y-6 fade-in">
+            <!-- Abas do Gestor -->
+            <div class="flex overflow-x-auto bg-gray-200 p-1 rounded-xl max-w-4xl shadow-inner no-scrollbar">
+                <button onclick="switchTab('gerente', 'painel')" id="tab-ger-painel" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition">Painel de Chamados</button>
+                <button onclick="switchTab('gerente', 'retornos')" id="tab-ger-retornos" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition">Retornos da Equipe <span id="ger-retornos-badge" class="bg-orange-500 text-white px-1.5 py-0.5 rounded-full text-[10px] ml-1">0</span></button>
+                <button onclick="switchTab('gerente', 'periodicas')" id="tab-ger-periodicas" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition">Manutenções Periódicas</button>
+                <button onclick="switchTab('gerente', 'solicitacoes')" id="tab-ger-solicitacoes" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition">Solicitações de Equipes <span id="ger-sol-badge" class="bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[10px] ml-1">0</span></button>
+            </div>
+
+            <!-- Aba Painel de Chamados (Triagem, Acompanhamento, Histórico) -->
+            <div id="content-ger-painel" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                
+                <!-- Coluna Triagem -->
+                <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 flex flex-col min-h-[500px]">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-200">
+                        <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-inbox text-cinRed"></i> Triagem (Novos)
+                        </h4>
+                        <span id="count-triagem" class="bg-red-100 text-cinRed font-bold text-xs px-2.5 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="list-ger-triagem" class="space-y-3 flex-1 overflow-y-auto">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <!-- Coluna Acompanhamento -->
+                <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 flex flex-col min-h-[500px]">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-200">
+                        <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-spinner text-blue-600"></i> Acompanhamento
+                        </h4>
+                        <span id="count-acompanhamento" class="bg-blue-100 text-blue-700 font-bold text-xs px-2.5 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="list-ger-acompanhamento" class="space-y-3 flex-1 overflow-y-auto">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <!-- Coluna Histórico / Concluídos -->
+                <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 flex flex-col min-h-[500px]">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-200">
+                        <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-check text-green-600"></i> Histórico / Fechados
+                        </h4>
+                        <span id="count-historico" class="bg-green-100 text-green-700 font-bold text-xs px-2.5 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="list-ger-historico" class="space-y-3 flex-1 overflow-y-auto">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Aba Retornos da Equipe -->
+            <div id="content-ger-retornos" class="hidden space-y-4 max-w-4xl">
+                <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl">
+                    <p class="text-sm font-bold text-orange-800">Chamados Devolvidos pela Equipe Técnica</p>
+                    <p class="text-xs text-orange-700 mt-0.5">Estes chamados necessitam de decisão administrativa, compra de peças ou acionamento de garantia/empresa externa.</p>
+                </div>
+                <div id="list-ger-retornos" class="space-y-4">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Aba Manutenções Periódicas (Gestor) -->
+            <div id="content-ger-periodicas" class="hidden space-y-6 max-w-5xl">
+                <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-900">Gestão de Manutenções Periódicas / Recorrentes</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Cadastre revisões preventivas programadas para gerar chamados automáticos na data definida.</p>
+                    </div>
+                    <button onclick="openPeriodicModal()" class="px-5 py-2.5 bg-cinRed hover:bg-cinDarkRed text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Nova Manutenção Periódica
+                    </button>
+                </div>
+
+                <div id="list-ger-periodicas" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Aba Solicitações Periódicas das Equipes -->
+            <div id="content-ger-solicitacoes" class="hidden space-y-4 max-w-4xl">
+                <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl">
+                    <p class="text-sm font-bold text-blue-900">Solicitações de Manutenção Periódica Enviadas pelas Equipes</p>
+                    <p class="text-xs text-blue-700 mt-0.5">Aprove para que o agendamento passe a valer oficialmente no cronograma do CIn.</p>
+                </div>
+                <div id="list-ger-solicitacoes" class="space-y-4">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VISÃO 3: EQUIPE DE MANUTENÇÃO (KANBAN) -->
+        <!-- ========================================================== -->
+        <div id="view-equipe" class="hidden space-y-6 fade-in">
+            <!-- Abas da Equipe -->
+            <div class="flex overflow-x-auto bg-gray-200 p-1 rounded-xl max-w-xl shadow-inner no-scrollbar">
+                <button onclick="switchTab('equipe', 'kanban')" id="tab-eq-kanban" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition">Quadro Kanban Operacional</button>
+                <button onclick="switchTab('equipe', 'periodicas')" id="tab-eq-periodicas" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition">Minhas Periódicas</button>
+                <button onclick="switchTab('equipe', 'solicitacoes')" id="tab-eq-solicitacoes" class="whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition">Solicitações Enviadas</button>
+            </div>
+
+            <!-- Aba Kanban Operacional -->
+            <div id="content-eq-kanban" class="space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-gray-200 gap-2">
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base" id="team-title-banner">Fila de Atendimento - Equipe</h3>
+                        <p class="text-xs text-gray-500">Arraste os cards entre as colunas ou verticalmente para priorizar o atendimento diário.</p>
+                    </div>
+                    <span class="text-xs font-bold bg-red-50 text-cinRed px-3 py-1.5 rounded-lg border border-red-100">
+                        <i class="fa-solid fa-arrows-up-down-left-right mr-1"></i> Drag & Drop Ativo
+                    </span>
+                </div>
+
+                <!-- Quadro Kanban 3 Colunas Exatas (Urgente, Moderado, Leve/Rotina) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    
+                    <!-- Coluna Urgente -->
+                    <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 flex flex-col min-h-[500px]">
+                        <div class="p-3 bg-white rounded-xl shadow-xs border-t-4 border-red-600 mb-3 flex justify-between items-center">
+                            <h4 class="font-bold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-fire text-red-600"></i> Urgente
+                            </h4>
+                            <span id="count-kanban-urgente" class="bg-red-100 text-red-700 font-bold text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-urgente" class="space-y-3 flex-1 overflow-y-auto">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Coluna Moderado -->
+                    <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 flex flex-col min-h-[500px]">
+                        <div class="p-3 bg-white rounded-xl shadow-xs border-t-4 border-amber-500 mb-3 flex justify-between items-center">
+                            <h4 class="font-bold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Moderado
+                            </h4>
+                            <span id="count-kanban-moderado" class="bg-amber-100 text-amber-800 font-bold text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-moderado" class="space-y-3 flex-1 overflow-y-auto">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Coluna Leve / Rotina -->
+                    <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 flex flex-col min-h-[500px]">
+                        <div class="p-3 bg-white rounded-xl shadow-xs border-t-4 border-blue-500 mb-3 flex justify-between items-center">
+                            <h4 class="font-bold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info text-blue-500"></i> Leve / Rotina
+                            </h4>
+                            <span id="count-kanban-leve" class="bg-blue-100 text-blue-700 font-bold text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanban-leve" class="space-y-3 flex-1 overflow-y-auto">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Aba Periódicas da Equipe -->
+            <div id="content-eq-periodicas" class="hidden space-y-4 max-w-4xl">
+                <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-900">Manutenções Periódicas Atribuídas à Minha Equipe</h3>
+                        <p class="text-xs text-gray-500">Acompanhe as revisões preventivas programadas para a sua especialidade.</p>
+                    </div>
+                    <button onclick="openTeamRequestModal()" class="px-5 py-2.5 bg-cinRed hover:bg-cinDarkRed text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Solicitar Nova Manutenção Periódica
+                    </button>
+                </div>
+                <div id="list-eq-periodicas" class="space-y-3">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Aba Solicitações da Equipe -->
+            <div id="content-eq-solicitacoes" class="hidden space-y-4 max-w-4xl">
+                <h3 class="font-bold text-gray-900 text-lg">Acompanhamento das Minhas Solicitações de Periódicas</h3>
+                <div id="list-eq-solicitacoes" class="space-y-3">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAIS DO SISTEMA -->
+
+    <!-- Modal Alocar Equipe (Gestor) -->
+    <div id="modal-allocate" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl fade-in">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Alocar Equipe Responsável</h3>
+            <p class="text-xs text-gray-500 mb-4" id="allocate-ticket-info">Selecione a equipe técnica para este chamado.</p>
+            <input type="hidden" id="allocate-ticket-id">
+            
+            <div class="space-y-3 mb-6">
+                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Equipe Técnica</label>
+                <select id="select-allocate-team" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-cinRed focus:outline-none">
+                    <option value="Elétrica">⚡ Equipe de Elétrica</option>
+                    <option value="Hidráulica">💧 Equipe de Hidráulica</option>
+                    <option value="Refrigeração">❄️ Equipe de Refrigeração</option>
+                    <option value="TI / Rede">💻 Equipe de T.I. / Rede</option>
+                    <option value="Mobiliário">🪑 Equipe de Mobiliário</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal('modal-allocate')" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition">Cancelar</button>
+                <button onclick="confirmAllocation()" class="px-5 py-2.5 bg-cinRed hover:bg-cinDarkRed text-white font-bold text-xs rounded-xl shadow-md transition">Confirmar Alocação</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ações da Equipe (Clicar no Card do Kanban) -->
+    <div id="modal-team-action" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-4 border-b pb-3">
+                <div>
+                    <span id="team-modal-id" class="text-xs font-bold text-cinRed uppercase">ID #000</span>
+                    <h3 class="text-lg font-bold text-gray-900 mt-0.5" id="team-modal-title">Título do Chamado</h3>
+                </div>
+                <button onclick="closeModal('modal-team-action')" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <input type="hidden" id="team-modal-ticket-id">
+
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
+                    <p class="text-xs text-gray-600"><strong>Local:</strong> <span id="team-modal-location">-</span></p>
+                    <p class="text-xs text-gray-600"><strong>Descrição:</strong> <span id="team-modal-desc">-</span></p>
+                </div>
+
+                <!-- Status de Progresso da Equipe -->
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-700 mb-2">Alterar Status do Atendimento</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setTeamStatus('Em Análise')" id="status-btn-analise" class="py-2.5 px-3 border rounded-xl text-xs font-bold transition">Em Análise</button>
+                        <button onclick="setTeamStatus('Em Andamento')" id="status-btn-andamento" class="py-2.5 px-3 border rounded-xl text-xs font-bold transition">Em Andamento</button>
+                        <button onclick="setTeamStatus('Concluído')" id="status-btn-concluido" class="py-2.5 px-3 border rounded-xl text-xs font-bold transition">Concluído</button>
+                    </div>
+                </div>
+
+                <!-- Feedback Obrigatório se Concluído -->
+                <div id="feedback-container" class="hidden">
+                    <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Feedback / Solução Aplicada (Obrigatório para concluir)</label>
+                    <textarea id="team-feedback-text" rows="2" placeholder="O que foi feito para sanar o problema..." class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-cinRed focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Mensagem para o Solicitante -->
+                <div class="border-t pt-4">
+                    <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Enviar Mensagem Direta ao Solicitante</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="team-msg-solicitante" placeholder="Ex: Peça chegou, iremos amanhã..." class="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-cinRed">
+                        <button onclick="sendTeamMessageToRequester()" class="px-4 py-2 bg-gray-800 text-white font-bold text-xs rounded-xl hover:bg-black transition">Enviar</button>
+                    </div>
+                </div>
+
+                <!-- Retorno para a Gerinfra (Não fecha o chamado) -->
+                <div class="border-t pt-4">
+                    <label class="block text-xs font-bold uppercase text-red-700 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Enviar Retorno para a Gerinfra (Ex: Compra de peça / Terceirizado)</label>
+                    <textarea id="team-return-text" rows="2" placeholder="Motivo pelo qual precisa de intervenção da gestão..." class="w-full px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-xs focus:ring-2 focus:ring-cinRed focus:outline-none resize-none mb-2"></textarea>
+                    <button onclick="sendTeamReturnToManager()" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar Retorno para Gestão (Chamado permanece aberto)
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-3 border-t flex justify-end">
+                <button onclick="closeModal('modal-team-action')" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs rounded-xl transition">Fechar Janela</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Histórico / Mensagens do Solicitante -->
+    <div id="modal-solicitante-history" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl fade-in">
+            <div class="flex justify-between items-start mb-4 border-b pb-3">
+                <div>
+                    <span id="sol-modal-id" class="text-xs font-bold text-cinRed uppercase">ID #000</span>
+                    <h3 class="text-lg font-bold text-gray-900 mt-0.5" id="sol-modal-title">Detalhes do Chamado</h3>
+                </div>
+                <button onclick="closeModal('modal-solicitante-history')" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-3 rounded-xl border text-xs space-y-1">
+                    <p><strong>Local:</strong> <span id="sol-modal-loc">-</span></p>
+                    <p><strong>Status Atual:</strong> <span id="sol-modal-status" class="font-bold text-cinRed">-</span></p>
+                    <p><strong>Descrição:</strong> <span id="sol-modal-desc">-</span></p>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold uppercase text-gray-700 mb-2"><i class="fa-solid fa-comments text-cinRed"></i> Linha do Tempo / Mensagens da Equipe e Gestor</h4>
+                    <div id="sol-modal-messages" class="space-y-2 max-h-48 overflow-y-auto bg-gray-100 p-3 rounded-xl text-xs">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-3 border-t flex justify-end">
+                <button onclick="closeModal('modal-solicitante-history')" class="px-5 py-2.5 bg-gray-800 text-white font-bold text-xs rounded-xl transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal CRUD / Edição Manutenção Periódica (Gestor) -->
+    <div id="modal-periodic-crud" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl fade-in">
+            <h3 class="text-lg font-bold text-gray-900 mb-1" id="periodic-modal-title">Cadastrar Manutenção Periódica</h3>
+            <p class="text-xs text-gray-500 mb-4">Defina os detalhes da revisão preventiva.</p>
+            <input type="hidden" id="periodic-edit-id">
+
+            <form onsubmit="savePeriodicMaintenance(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Título da Manutenção</label>
+                    <input type="text" id="periodic-title" required placeholder="Ex: Limpeza de Filtros de Ar-condicionado" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Local / Setor</label>
+                    <input type="text" id="periodic-location" required placeholder="Ex: Labs de Graduação (1 ao 4)" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Data Programada (Calendário)</label>
+                    <input type="date" id="periodic-date" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Equipe Responsável Atribuída</label>
+                    <select id="periodic-team" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-cinRed focus:outline-none">
+                        <option value="">Nenhuma (Vai para Triagem)</option>
+                        <option value="Elétrica">⚡ Equipe de Elétrica</option>
+                        <option value="Hidráulica">💧 Equipe de Hidráulica</option>
+                        <option value="Refrigeração">❄️ Equipe de Refrigeração</option>
+                        <option value="TI / Rede">💻 Equipe de T.I. / Rede</option>
+                        <option value="Mobiliário">🪑 Equipe de Mobiliário</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3">
+                    <button type="button" onclick="closeModal('modal-periodic-crud')" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 bg-cinRed hover:bg-cinDarkRed text-white font-bold text-xs rounded-xl shadow-md transition">Salvar Manutenção</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Solicitar Manutenção Periódica (Equipe) -->
+    <div id="modal-team-request-periodic" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl fade-in">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">Solicitar Manutenção Periódica</h3>
+            <p class="text-xs text-gray-500 mb-4">Envie a proposta de revisão preventiva para aprovação do gestor.</p>
+
+            <form onsubmit="submitTeamPeriodicRequest(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Título / Descrição da Revisão</label>
+                    <input type="text" id="req-periodic-title" required placeholder="Ex: Revisão preventiva no nobreak do CPD" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Local / Setor</label>
+                    <input type="text" id="req-periodic-location" required placeholder="Ex: CPD - Sala 02" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Data Sugerida</label>
+                    <input type="date" id="req-periodic-date" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cinRed focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3">
+                    <button type="button" onclick="closeModal('modal-team-request-periodic')" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 bg-cinRed hover:bg-cinDarkRed text-white font-bold text-xs rounded-xl shadow-md transition">Enviar Solicitação ao Gestor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sistema de Toast Notificação Customizado -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- SCRIPT DE GERENCIAMENTO DE ESTADO E INTERATIVIDADE -->
+    <script>
+        // Estado Global da Aplicação
+        let state = {
+            currentUser: {
+                role: 'solicitante', // 'solicitante', 'gerente', 'equipe'
+                email: 'usuario@cin.ufpe.br',
+                team: 'Elétrica'
+            },
+            tickets: [
+                {
+                    id: 4092,
+                    title: 'Vazamento teto laboratório',
+                    location: 'Lab Graduação 1',
+                    type: 'Hidráulica',
+                    urgency: 'urgente', // 'urgente', 'moderado', 'leve'
+                    status: 'Acompanhamento', // 'Triagem', 'Acompanhamento', 'Concluido', 'Retornado'
+                    description: 'Está pingando água bem em cima dos computadores da fileira do meio.',
+                    team: 'Hidráulica',
+                    feedback: '',
+                    messages: [
+                        { sender: 'Gestor Gerinfra', text: 'Chamado alocado para a Equipe de Hidráulica.', time: 'Hoje, 09:30' }
+                    ]
+                },
+                {
+                    id: 4090,
+                    title: 'Servidor de Rede Desligando',
+                    location: 'Sala Servidores (CPD)',
+                    type: 'TI / Rede',
+                    urgency: 'urgente',
+                    status: 'Acompanhamento',
+                    description: 'Quedas repentinas de energia no rack principal.',
+                    team: 'TI / Rede',
+                    feedback: '',
+                    messages: []
+                },
+                {
+                    id: 4088,
+                    title: 'Ar-condicionado pingando',
+                    location: 'Sala Pós-Graduação B',
+                    type: 'Refrigeração',
+                    urgency: 'moderado',
+                    status: 'Acompanhamento',
+                    description: 'Unidade interna gerando poças de água no chão.',
+                    team: 'Refrigeração',
+                    feedback: '',
+                    messages: []
+                },
+                {
+                    id: 4085,
+                    title: 'Troca de lâmpada queimada',
+                    location: 'Corredor Bloco A',
+                    type: 'Elétrica',
+                    urgency: 'leve',
+                    status: 'Acompanhamento',
+                    description: 'Lâmpada tubular do teto apagada há 3 dias.',
+                    team: 'Elétrica',
+                    feedback: '',
+                    messages: []
+                },
+                {
+                    id: 4080,
+                    title: 'Compressor Ar-condicionado Queimado',
+                    location: 'Auditório Principal',
+                    type: 'Refrigeração',
+                    urgency: 'urgente',
+                    status: 'Retornado',
+                    description: 'Aparelho não liga e cheira a queimado.',
+                    team: 'Refrigeração',
+                    feedback: '',
+                    returnReason: 'Avaliamos o equipamento e o compressor estourou. Como está na garantia da LG, requer acionar a empresa fornecedora.',
+                    messages: [
+                        { sender: 'Equipe Refrigeração', text: 'Retornado para Gerinfra: Requer terceirizado.', time: 'Ontem, 16:20' }
+                    ]
+                }
+            ],
+            periodic: [
+                {
+                    id: 1,
+                    title: 'Limpeza de Filtros AC',
+                    location: 'Labs de Graduação (1 ao 4)',
+                    date: '2026-10-15',
+                    team: 'Refrigeração',
+                    status: 'Ativo'
+                },
+                {
+                    id: 2,
+                    title: 'Revisão Quadro Geral de Baixa Tensão',
+                    location: 'Subestação CIn',
+                    date: '2026-10-20',
+                    team: 'Elétrica',
+                    status: 'Ativo'
+                }
+            ],
+            periodicRequests: [
+                {
+                    id: 1,
+                    title: 'Manutenção preventiva nas bombas d\'água',
+                    location: 'Cobertura Bloco Central',
+                    date: '2026-11-05',
+                    team: 'Hidráulica',
+                    status: 'Pendente'
+                }
+            ]
+        };
+
+        let kanbanSortables = [];
+
+        // Controle da Tela de Login
+        function toggleTeamSelect() {
+            const role = document.getElementById('login-role').value;
+            const teamContainer = document.getElementById('team-select-container');
+            if (role === 'equipe') {
+                teamContainer.classList.remove('hidden');
+            } else {
+                teamContainer.classList.add('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const role = document.getElementById('login-role').value;
+            const email = document.getElementById('login-email').value;
+            const team = document.getElementById('login-team').value;
+
+            state.currentUser = { role, email, team };
+            
+            document.getElementById('login-screen').classList.add('hidden');
+            initApp();
+            showToast('Login efetuado com sucesso!', 'success');
+        }
+
+        function logout() {
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Inicializador do Aplicativo Baseado no Papel Atual
+        function initApp() {
+            const { role, email, team } = state.currentUser;
+            
+            document.getElementById('header-user-name').innerText = email.split('@')[0];
+            
+            let roleBadgeText = 'Solicitante';
+            if (role === 'gerente') roleBadgeText = 'Gestor Gerinfra';
+            if (role === 'equipe') roleBadgeText = `Equipe Operacional (${team})`;
+            document.getElementById('header-user-role-badge').innerText = roleBadgeText;
+
+            // Ocultar todas as visões
+            document.getElementById('view-solicitante').classList.add('hidden');
+            document.getElementById('view-gerente').classList.add('hidden');
+            document.getElementById('view-equipe').classList.add('hidden');
+
+            // Exibir visão correta
+            document.getElementById(`view-${role}`).classList.remove('hidden');
+
+            if (role === 'solicitante') {
+                switchTab('solicitante', 'novo');
+                renderSolicitanteTickets();
+            } else if (role === 'gerente') {
+                switchTab('gerente', 'painel');
+                renderManagerDashboard();
+            } else if (role === 'equipe') {
+                switchTab('equipe', 'kanban');
+                document.getElementById('team-title-banner').innerText = `Fila de Atendimento - Equipe de ${team}`;
+                renderTeamKanban();
+                renderTeamPeriodic();
+                renderTeamRequests();
+            }
+        }
+
+        // Navegação por Abas
+        function switchTab(role, tab) {
+            if (role === 'solicitante') {
+                document.getElementById('content-sol-novo').classList.toggle('hidden', tab !== 'novo');
+                document.getElementById('content-sol-lista').classList.toggle('hidden', tab !== 'lista');
+                
+                document.getElementById('tab-sol-novo').className = tab === 'novo' ? "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition" : "flex-1 py-2 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition";
+                document.getElementById('tab-sol-lista').className = tab === 'lista' ? "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition" : "flex-1 py-2 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition";
+            } else if (role === 'gerente') {
+                document.getElementById('content-ger-painel').classList.toggle('hidden', tab !== 'painel');
+                document.getElementById('content-ger-retornos').classList.toggle('hidden', tab !== 'retornos');
+                document.getElementById('content-ger-periodicas').classList.toggle('hidden', tab !== 'periodicas');
+                document.getElementById('content-ger-solicitacoes').classList.toggle('hidden', tab !== 'solicitacoes');
+
+                const gerTabs = ['painel', 'retornos', 'periodicas', 'solicitacoes'];
+                gerTabs.forEach(t => {
+                    const btn = document.getElementById(`tab-ger-${t}`);
+                    if(btn) {
+                        btn.className = t === tab ? "whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition" : "whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition";
+                    }
+                });
+            } else if (role === 'equipe') {
+                document.getElementById('content-eq-kanban').classList.toggle('hidden', tab !== 'kanban');
+                document.getElementById('content-eq-periodicas').classList.toggle('hidden', tab !== 'periodicas');
+                document.getElementById('content-eq-solicitacoes').classList.toggle('hidden', tab !== 'solicitacoes');
+
+                const eqTabs = ['kanban', 'periodicas', 'solicitacoes'];
+                eqTabs.forEach(t => {
+                    const btn = document.getElementById(`tab-eq-${t}`);
+                    if(btn) {
+                        btn.className = t === tab ? "whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg bg-white shadow-sm text-cinRed transition" : "whitespace-nowrap px-5 py-2.5 text-xs font-bold rounded-lg text-gray-600 hover:text-gray-900 transition";
+                    }
+                });
+
+                if(tab === 'kanban') {
+                    setTimeout(initKanbanDragAndDrop, 50);
+                }
+            }
+        }
+
+        // Funções do Solicitante
+        function createTicket(e) {
+            e.preventDefault();
+            const location = document.getElementById('ticket-location').value;
+            const typeInput = document.querySelector('input[name="ticket-type"]:checked');
+            const type = typeInput ? typeInput.value : 'Elétrica';
+            const urgency = document.getElementById('ticket-urgency').value;
+            const description = document.getElementById('ticket-desc').value;
+
+            const newTicket = {
+                id: Math.floor(1000 + Math.random() * 9000),
+                title: `${type} em ${location}`,
+                location,
+                type,
+                urgency,
+                status: 'Triagem',
+                description,
+                team: 'Não alocada',
+                feedback: '',
+                messages: [
+                    { sender: 'Sistema', text: 'Chamado aberto com sucesso e enviado para a Gerinfra.', time: 'Agora' }
+                ]
+            };
+
+            state.tickets.unshift(newTicket);
+            showToast('Chamado enviado com sucesso!', 'success');
+            
+            document.getElementById('ticket-location').value = '';
+            document.getElementById('ticket-desc').value = '';
+            
+            switchTab('solicitante', 'lista');
+            renderSolicitanteTickets();
+        }
+
+        function renderSolicitanteTickets() {
+            const container = document.getElementById('solicitante-tickets-container');
+            container.innerHTML = '';
+
+            if (state.tickets.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-8">Nenhum chamado registrado até o momento.</p>`;
+                return;
+            }
+
+            state.tickets.forEach(t => {
+                let statusBadge = '<span class="px-2.5 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-bold rounded-full">Em Triagem</span>';
+                if (t.status === 'Acompanhamento') statusBadge = '<span class="px-2.5 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">Em Atendimento</span>';
+                if (t.status === 'Concluido') statusBadge = '<span class="px-2.5 py-1 bg-green-100 text-green-800 text-[10px] font-bold rounded-full">Concluído</span>';
+                if (t.status === 'Retornado') statusBadge = '<span class="px-2.5 py-1 bg-orange-100 text-orange-800 text-[10px] font-bold rounded-full">Retornado à Gestão</span>';
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-cinRed transition cursor-pointer";
+                card.onclick = () => openSolicitanteHistoryModal(t.id);
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 text-cinRed flex items-center justify-center font-bold text-base shrink-0">
+                            <i class="fa-solid fa-ticket"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-bold text-gray-900 text-sm">#${t.id} - ${t.title}</h4>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> ${t.location} (${t.type})</p>
+                            <p class="text-xs text-gray-600 mt-1 italic line-clamp-1">"${t.description}"</p>
+                        </div>
+                    </div>
+                    <div class="text-xs font-semibold text-cinRed flex items-center gap-1 shrink-0">
+                        Ver Linha do Tempo <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openSolicitanteHistoryModal(ticketId) {
+            const t = state.tickets.find(item => item.id === ticketId);
+            if (!t) return;
+
+            document.getElementById('sol-modal-id').innerText = `ID #${t.id}`;
+            document.getElementById('sol-modal-title').innerText = t.title;
+            document.getElementById('sol-modal-loc').innerText = t.location;
+            document.getElementById('sol-modal-status').innerText = t.status;
+            document.getElementById('sol-modal-desc').innerText = t.description;
+
+            const msgContainer = document.getElementById('sol-modal-messages');
+            msgContainer.innerHTML = '';
+
+            if (t.messages.length === 0) {
+                msgContainer.innerHTML = `<p class="text-xs text-gray-400 italic">Nenhuma mensagem ou retorno registrado ainda.</p>`;
+            } else {
+                t.messages.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = "p-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center text-[10px] text-gray-400 mb-1">
+                            <span class="font-bold text-gray-700">${m.sender}</span>
+                            <span>${m.time}</span>
+                        </div>
+                        <p class="text-xs text-gray-800">${m.text}</p>
+                    `;
+                    msgContainer.appendChild(div);
+                });
+            }
+
+            if (t.feedback) {
+                const div = document.createElement('div');
+                div.className = "p-2.5 bg-green-50 rounded-lg border border-green-200 text-xs text-green-900";
+                div.innerHTML = `<strong>Feedback da Conclusão:</strong> ${t.feedback}`;
+                msgContainer.appendChild(div);
+            }
+
+            document.getElementById('modal-solicitante-history').classList.remove('hidden');
+            document.getElementById('modal-solicitante-history').classList.add('flex');
+        }
+
+        // Funções do Gestor Gerinfra
+        function renderManagerDashboard() {
+            renderManagerKanban();
+            renderManagerReturns();
+            renderManagerPeriodic();
+            renderManagerPeriodicRequests();
+        }
+
+        function renderManagerKanban() {
+            const triagem = document.getElementById('list-ger-triagem');
+            const acompanhamento = document.getElementById('list-ger-acompanhamento');
+            const historico = document.getElementById('list-ger-historico');
+
+            triagem.innerHTML = '';
+            acompanhamento.innerHTML = '';
+            historico.innerHTML = '';
+
+            let cTri = 0, cAcomp = 0, cHist = 0;
+
+            state.tickets.forEach(t => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow-xs border border-gray-200 hover:border-gray-300 transition space-y-2";
+                
+                let actionHTML = '';
+                if (t.status === 'Triagem') {
+                    cTri++;
+                    actionHTML = `
+                        <button onclick="openAllocateModal(${t.id})" class="w-full mt-2 py-2 bg-cinBlack hover:bg-gray-800 text-white font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-user-gear"></i> Alocar Equipe
+                        </button>
+                    `;
+                } else if (t.status === 'Acompanhamento') {
+                    cAcomp++;
+                    actionHTML = `
+                        <div class="flex justify-between items-center text-[10px] text-gray-500 pt-2 border-t mt-2">
+                            <span>Equipe: <strong class="text-gray-800">${t.team}</strong></span>
+                            <span class="text-blue-600 font-bold">Em Execução</span>
+                        </div>
+                    `;
+                } else if (t.status === 'Concluido' || t.status === 'Retornado') {
+                    cHist++;
+                    actionHTML = `
+                        <div class="flex justify-between items-center text-[10px] text-gray-500 pt-2 border-t mt-2">
+                            <span>Status: <strong class="text-green-700">${t.status}</strong></span>
+                            <span>Equipe: ${t.team}</span>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="text-[10px] font-bold text-gray-400">#${t.id} - ${t.type}</span>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${t.urgency === 'urgente' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}">${t.urgency}</span>
+                    </div>
+                    <h5 class="font-bold text-gray-900 text-sm">${t.title}</h5>
+                    <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> ${t.location}</p>
+                    <p class="text-xs text-gray-600 italic line-clamp-2">"${t.description}"</p>
+                    ${actionHTML}
+                `;
+
+                if (t.status === 'Triagem') triagem.appendChild(card);
+                else if (t.status === 'Acompanhamento') acompanhamento.appendChild(card);
+                else historico.appendChild(card);
+            });
+
+            document.getElementById('count-triagem').innerText = cTri;
+            document.getElementById('count-acompanhamento').innerText = cAcomp;
+            document.getElementById('count-historico').innerText = cHist;
+        }
+
+        function openAllocateModal(ticketId) {
+            const t = state.tickets.find(item => item.id === ticketId);
+            if (!t) return;
+
+            document.getElementById('allocate-ticket-id').value = t.id;
+            document.getElementById('allocate-ticket-info').innerText = `Chamado #${t.id}: ${t.title} (${t.location})`;
+            
+            document.getElementById('modal-allocate').classList.remove('hidden');
+            document.getElementById('modal-allocate').classList.add('flex');
+        }
+
+        function confirmAllocation() {
+            const ticketId = parseInt(document.getElementById('allocate-ticket-id').value);
+            const team = document.getElementById('select-allocate-team').value;
+
+            const t = state.tickets.find(item => item.id === ticketId);
+            if (t) {
+                t.team = team;
+                t.status = 'Acompanhamento';
+                t.messages.push({ sender: 'Gestor Gerinfra', text: `Chamado alocado para a equipe de ${team}.`, time: 'Agora' });
+            }
+
+            closeModal('modal-allocate');
+            renderManagerDashboard();
+            showToast('Equipe alocada e chamado movido para acompanhamento!', 'success');
+        }
+
+        function renderManagerReturns() {
+            const container = document.getElementById('list-ger-retornos');
+            container.innerHTML = '';
+
+            const returnedTickets = state.tickets.filter(t => t.status === 'Retornado');
+            document.getElementById('ger-retornos-badge').innerText = returnedTickets.length;
+
+            if (returnedTickets.length === 0) {
+                container.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center border border-gray-200 text-gray-400 text-xs">Nenhum chamado retornado pelas equipes no momento.</div>`;
+                return;
+            }
+
+            returnedTickets.forEach(t => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl shadow-sm border border-orange-200 space-y-3";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-bold text-orange-600">ID #${t.id} - Equipe ${t.team}</span>
+                            <h4 class="font-bold text-gray-900 text-base">${t.title}</h4>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> ${t.location}</p>
+                        </div>
+                        <span class="px-2.5 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">Retornado</span>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-xl border border-red-100 text-xs text-red-900">
+                        <strong>Motivo do Retorno:</strong> ${t.returnReason || 'Necessidade de intervenção externa.'}
+                    </div>
+                    <div class="space-y-2 pt-2 border-t">
+                        <label class="block text-[10px] font-bold uppercase text-gray-600">Ações do Gestor</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="mgr-msg-user-${t.id}" placeholder="Mensagem para o usuário..." class="flex-1 px-3 py-2 bg-gray-50 border rounded-xl text-xs focus:outline-none">
+                            <button onclick="managerSendMsgToUser(${t.id})" class="px-3 py-2 bg-gray-700 text-white font-bold text-xs rounded-xl hover:bg-gray-800 transition">Retornar p/ Usuário</button>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="mgr-msg-team-${t.id}" placeholder="Mensagem para a equipe..." class="flex-1 px-3 py-2 bg-gray-50 border rounded-xl text-xs focus:outline-none">
+                            <button onclick="managerSendMsgToTeam(${t.id})" class="px-3 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition">Retornar p/ Equipe</button>
+                            <button onclick="managerCloseTicket(${t.id})" class="px-3 py-2 bg-green-600 text-white font-bold text-xs rounded-xl hover:bg-green-700 transition">Fechar Chamado</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function managerSendMsgToUser(ticketId) {
+            const t = state.tickets.find(item => item.id === ticketId);
+            const input = document.getElementById(`mgr-msg-user-${ticketId}`);
+            if (!t || !input.value.trim()) return;
+
+            t.messages.push({ sender: 'Gestor Gerinfra', text: `Mensagem ao Usuário: ${input.value}`, time: 'Agora' });
+            input.value = '';
+            showToast('Mensagem enviada ao solicitante!', 'success');
+        }
+
+        function managerSendMsgToTeam(ticketId) {
+            const t = state.tickets.find(item => item.id === ticketId);
+            const input = document.getElementById(`mgr-msg-team-${ticketId}`);
+            if (!t || !input.value.trim()) return;
+
+            t.messages.push({ sender: 'Gestor Gerinfra', text: `Instrução à Equipe: ${input.value}`, time: 'Agora' });
+            input.value = '';
+            showToast('Mensagem enviada à equipe técnica!', 'success');
+        }
+
+        function managerCloseTicket(ticketId) {
+            const t = state.tickets.find(item => item.id === ticketId);
+            if (t) {
+                t.status = 'Concluido';
+                t.feedback = 'Chamado fechado administrativamente pela Gerinfra após retorno.';
+            }
+            renderManagerDashboard();
+            showToast('Chamado fechado com sucesso!', 'success');
+        }
+
+        // Manutenções Periódicas (Gestor)
+        function renderManagerPeriodic() {
+            const container = document.getElementById('list-ger-periodicas');
+            container.innerHTML = '';
+
+            if (state.periodic.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 col-span-2 text-center py-6">Nenhuma manutenção periódica cadastrada.</p>`;
+                return;
+            }
+
+            state.periodic.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3 relative";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Recorrente</span>
+                            <h4 class="font-bold text-gray-900 text-base mt-1">${p.title}</h4>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openPeriodicModal(${p.id})" class="p-2 text-gray-400 hover:text-cinRed transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deletePeriodic(${p.id})" class="p-2 text-gray-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> ${p.location}</p>
+                    <div class="flex items-center justify-between pt-2 border-t text-xs">
+                        <span class="text-gray-500"><i class="fa-solid fa-calendar mr-1"></i> Data: <strong>${p.date}</strong></span>
+                        <span class="text-gray-700 font-medium">Equipe: ${p.team || 'Nenhuma'}</span>
+                    </div>
+                    <button onclick="simulatePeriodicDate(${p.id})" class="w-full mt-2 py-2.5 bg-cinRed hover:bg-cinDarkRed text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Simular Data (Gerar Chamado Agora)
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openPeriodicModal(id = null) {
+            document.getElementById('periodic-edit-id').value = '';
+            document.getElementById('periodic-title').value = '';
+            document.getElementById('periodic-location').value = '';
+            document.getElementById('periodic-date').value = '';
+            document.getElementById('periodic-team').value = '';
+
+            if (id) {
+                document.getElementById('periodic-modal-title').innerText = 'Editar Manutenção Periódica';
+                const p = state.periodic.find(item => item.id === id);
+                if (p) {
+                    document.getElementById('periodic-edit-id').value = p.id;
+                    document.getElementById('periodic-title').value = p.title;
+                    document.getElementById('periodic-location').value = p.location;
+                    document.getElementById('periodic-date').value = p.date;
+                    document.getElementById('periodic-team').value = p.team;
+                }
+            } else {
+                document.getElementById('periodic-modal-title').innerText = 'Cadastrar Manutenção Periódica';
+            }
+
+            document.getElementById('modal-periodic-crud').classList.remove('hidden');
+            document.getElementById('modal-periodic-crud').classList.add('flex');
+        }
+
+        function savePeriodicMaintenance(e) {
+            e.preventDefault();
+            const id = document.getElementById('periodic-edit-id').value;
+            const title = document.getElementById('periodic-title').value;
+            const location = document.getElementById('periodic-location').value;
+            const date = document.getElementById('periodic-date').value;
+            const team = document.getElementById('periodic-team').value;
+
+            if (id) {
+                const p = state.periodic.find(item => item.id == id);
+                if (p) {
+                    p.title = title;
+                    p.location = location;
+                    p.date = date;
+                    p.team = team;
+                }
+                showToast('Manutenção periódica atualizada com sucesso!', 'success');
+            } else {
+                const newP = {
+                    id: Date.now(),
+                    title,
+                    location,
+                    date,
+                    team,
+                    status: 'Ativo'
+                };
+                state.periodic.push(newP);
+                showToast('Manutenção periódica cadastrada com sucesso!', 'success');
+            }
+
+            closeModal('modal-periodic-crud');
+            renderManagerDashboard();
+        }
+
+        function deletePeriodic(id) {
+            state.periodic = state.periodic.filter(p => p.id !== id);
+            renderManagerDashboard();
+            showToast('Manutenção periódica excluída.', 'success');
+        }
+
+        function simulatePeriodicDate(id) {
+            const p = state.periodic.find(item => item.id === id);
+            if (!p) return;
+
+            const newTicket = {
+                id: Math.floor(1000 + Math.random() * 9000),
+                title: `[Periódica] ${p.title}`,
+                location: p.location,
+                type: p.team || 'Geral',
+                urgency: 'moderado',
+                status: p.team ? 'Acompanhamento' : 'Triagem',
+                description: `Execução programada da manutenção periódica agendada para a data ${p.date}.`,
+                team: p.team || 'Não alocada',
+                feedback: '',
+                messages: [
+                    { sender: 'Sistema Agendador', text: `Gerado automaticamente via manutenção periódica em ${p.date}.`, time: 'Agora' }
+                ]
+            };
+
+            state.tickets.unshift(newTicket);
+            renderManagerDashboard();
+            showToast(`Chamado gerado com sucesso! (${p.team ? 'Alocado para ' + p.team : 'Enviado para Triagem'})`, 'success');
+        }
+
+        function renderManagerPeriodicRequests() {
+            const container = document.getElementById('list-ger-solicitacoes');
+            container.innerHTML = '';
+            document.getElementById('ger-sol-badge').innerText = state.periodicRequests.filter(r => r.status === 'Pendente').length;
+
+            if (state.periodicRequests.length === 0) {
+                container.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center border text-gray-400 text-xs">Nenhuma solicitação de manutenção periódica enviada pelas equipes.</div>`;
+                return;
+            }
+
+            state.periodicRequests.forEach(r => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl shadow-sm border border-blue-200 space-y-3";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-bold text-blue-600">Equipe Solicitante: ${r.team}</span>
+                            <h4 class="font-bold text-gray-900 text-base">${r.title}</h4>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> ${r.location} | Data: ${r.date}</p>
+                        </div>
+                        <span class="px-2.5 py-1 ${r.status === 'Pendente' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'} text-xs font-bold rounded-full">${r.status}</span>
+                    </div>
+                    ${r.status === 'Pendente' ? `
+                    <div class="flex gap-2 pt-2 border-t">
+                        <button onclick="approvePeriodicRequest(${r.id})" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl transition">Aprovar e Incluir no Cronograma</button>
+                        <button onclick="rejectPeriodicRequest(${r.id})" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs rounded-xl transition">Rejeitar</button>
+                    </div>
+                    ` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function approvePeriodicRequest(id) {
+            const req = state.periodicRequests.find(r => r.id === id);
+            if (req) {
+                req.status = 'Aprovado';
+                state.periodic.push({
+                    id: Date.now(),
+                    title: req.title,
+                    location: req.location,
+                    date: req.date,
+                    team: req.team,
+                    status: 'Ativo'
+                });
+            }
+            renderManagerDashboard();
+            showToast('Solicitação aprovada e incorporada às manutenções periódicas!', 'success');
+        }
+
+        function rejectPeriodicRequest(id) {
+            const req = state.periodicRequests.find(r => r.id === id);
+            if (req) req.status = 'Rejeitado';
+            renderManagerDashboard();
+            showToast('Solicitação rejeitada.', 'info');
+        }
+
+        // Funções da Equipe (Kanban & Modais)
+        let currentTeamModalTicketId = null;
+
+        function renderTeamKanban() {
+            const colUrgente = document.getElementById('kanban-urgente');
+            const colModerado = document.getElementById('kanban-moderado');
+            const colLeve = document.getElementById('kanban-leve');
+
+            colUrgente.innerHTML = '';
+            colModerado.innerHTML = '';
+            colLeve.innerHTML = '';
+
+            const teamName = state.currentUser.team;
+            const teamTickets = state.tickets.filter(t => t.team === teamName && t.status === 'Acompanhamento');
+
+            let cU = 0, cM = 0, cL = 0;
+
+            teamTickets.forEach(t => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow-xs border border-gray-200 cursor-grab active:cursor-grabbing hover:border-cinRed transition relative group";
+                card.setAttribute('data-id', t.id);
+                card.onclick = () => openTeamActionModal(t.id);
+
+                card.innerHTML = `
+                    <div class="absolute top-3 right-3 text-gray-300 group-hover:text-gray-600 drag-handle">
+                        <i class="fa-solid fa-grip-vertical"></i>
+                    </div>
+                    <div class="pr-6">
+                        <span class="text-[10px] font-bold text-gray-400">ID #${t.id}</span>
+                        <h5 class="font-bold text-gray-900 text-sm mt-0.5 mb-1">${t.title}</h5>
+                        <p class="text-xs text-gray-500 mb-2"><i class="fa-solid fa-location-dot"></i> ${t.location}</p>
+                        <span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold rounded">${t.type}</span>
+                    </div>
+                `;
+
+                if (t.urgency === 'urgente') {
+                    cU++;
+                    colUrgente.appendChild(card);
+                } else if (t.urgency === 'moderado') {
+                    cM++;
+                    colModerado.appendChild(card);
+                } else {
+                    cL++;
+                    colLeve.appendChild(card);
+                }
+            });
+
+            document.getElementById('count-kanban-urgente').innerText = cU;
+            document.getElementById('count-kanban-moderado').innerText = cM;
+            document.getElementById('count-kanban-leve').innerText = cL;
+        }
+
+        function initKanbanDragAndDrop() {
+            const containers = ['kanban-urgente', 'kanban-moderado', 'kanban-leve'];
+            kanbanSortables.forEach(s => s.destroy());
+            kanbanSortables = [];
+
+            containers.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    kanbanSortables.push(new Sortable(el, {
+                        group: 'team-kanban',
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        dragClass: 'sortable-drag',
+                        handle: '.drag-handle',
+                        onEnd: function (evt) {
+                            const ticketId = parseInt(evt.item.getAttribute('data-id'));
+                            const newParentId = evt.to.id;
+                            const t = state.tickets.find(item => item.id === ticketId);
+                            if (t) {
+                                if (newParentId === 'kanban-urgente') t.urgency = 'urgente';
+                                if (newParentId === 'kanban-moderado') t.urgency = 'moderado';
+                                if (newParentId === 'kanban-leve') t.urgency = 'leve';
+                            }
+                        }
+                    }));
+                }
+            });
+        }
+
+        function openTeamActionModal(ticketId) {
+            const t = state.tickets.find(item => item.id === ticketId);
+            if (!t) return;
+
+            currentTeamModalTicketId = t.id;
+            document.getElementById('team-modal-ticket-id').value = t.id;
+            document.getElementById('team-modal-id').innerText = `ID #${t.id}`;
+            document.getElementById('team-modal-title').innerText = t.title;
+            document.getElementById('team-modal-location').innerText = t.location;
+            document.getElementById('team-modal-desc').innerText = t.description;
+
+            document.getElementById('team-feedback-text').value = t.feedback || '';
+            document.getElementById('team-msg-solicitante').value = '';
+            document.getElementById('team-return-text').value = '';
+
+            updateTeamStatusButtons(t.status);
+
+            document.getElementById('modal-team-action').classList.remove('hidden');
+            document.getElementById('modal-team-action').classList.add('flex');
+        }
+
+        function updateTeamStatusButtons(status) {
+            const btnAnalise = document.getElementById('status-btn-analise');
+            const btnAndamento = document.getElementById('status-btn-andamento');
+            const btnConcluido = document.getElementById('status-btn-concluido');
+            const feedbackContainer = document.getElementById('feedback-container');
+
+            [btnAnalise, btnAndamento, btnConcluido].forEach(b => {
+                b.className = "py-2.5 px-3 border rounded-xl text-xs font-bold transition bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100";
+            });
+
+            if (status === 'Em Análise') {
+                btnAnalise.className = "py-2.5 px-3 border rounded-xl text-xs font-bold transition bg-amber-500 text-white border-amber-600 shadow-xs";
+                feedbackContainer.classList.add('hidden');
+            } else if (status === 'Em Andamento') {
+                btnAndamento.className = "py-2.5 px-3 border rounded-xl text-xs font-bold transition bg-blue-600 text-white border-blue-700 shadow-xs";
+                feedbackContainer.classList.add('hidden');
+            } else if (status === 'Concluído') {
+                btnConcluido.className = "py-2.5 px-3 border rounded-xl text-xs font-bold transition bg-green-600 text-white border-green-700 shadow-xs";
+                feedbackContainer.classList.remove('hidden');
+            }
+        }
+
+        function setTeamStatus(status) {
+            const t = state.tickets.find(item => item.id === currentTeamModalTicketId);
+            if (!t) return;
+
+            if (status === 'Concluído') {
+                const feedback = document.getElementById('team-feedback-text').value;
+                if (!feedback.trim()) {
+                    showToast('Preencha o feedback da solução para concluir o chamado.', 'error');
+                    return;
+                }
+                t.feedback = feedback;
+                t.status = 'Concluido';
+                showToast('Chamado marcado como concluído!', 'success');
+                closeModal('modal-team-action');
+                renderTeamKanban();
+                return;
+            }
+
+            t.status = 'Acompanhamento';
+            updateTeamStatusButtons(status);
+            showToast(`Status atualizado para: ${status}`, 'success');
+        }
+
+        function sendTeamMessageToRequester() {
+            const t = state.tickets.find(item => item.id === currentTeamModalTicketId);
+            const msg = document.getElementById('team-msg-solicitante').value;
+            if (!t || !msg.trim()) return;
+
+            t.messages.push({ sender: `Equipe ${state.currentUser.team}`, text: msg, time: 'Agora' });
+            document.getElementById('team-msg-solicitante').value = '';
+            showToast('Mensagem enviada ao solicitante!', 'success');
+        }
+
+        function sendTeamReturnToManager() {
+            const t = state.tickets.find(item => item.id === currentTeamModalTicketId);
+            const reason = document.getElementById('team-return-text').value;
+            if (!t || !reason.trim()) {
+                showToast('Informe o motivo do retorno para a Gerinfra.', 'error');
+                return;
+            }
+
+            t.status = 'Retornado';
+            t.returnReason = reason;
+            t.messages.push({ sender: `Equipe ${state.currentUser.team}`, text: `Retorno enviado à gestão: ${reason}`, time: 'Agora' });
+
+            showToast('Retorno enviado com sucesso! O chamado permanece na sua fila até a decisão da Gerinfra.', 'success');
+            closeModal('modal-team-action');
+            renderTeamKanban();
+        }
+
+        function renderTeamPeriodic() {
+            const container = document.getElementById('list-eq-periodicas');
+            container.innerHTML = '';
+            const teamName = state.currentUser.team;
+
+            const myPeriodic = state.periodic.filter(p => p.team === teamName);
+
+            if (myPeriodic.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">Nenhuma manutenção periódica atribuída à sua equipe.</p>`;
+                return;
+            }
+
+            myPeriodic.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-2";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-gray-900 text-base">${p.title}</h4>
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">${p.date}</span>
+                    </div>
+                    <p class="text-xs text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> ${p.location}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderTeamRequests() {
+            const container = document.getElementById('list-eq-solicitacoes');
+            container.innerHTML = '';
+            const teamName = state.currentUser.team;
+
+            const myReqs = state.periodicRequests.filter(r => r.team === teamName);
+
+            if (myReqs.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">Nenhuma solicitação enviada.</p>`;
+                return;
+            }
+
+            myReqs.forEach(r => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-2xl border border-gray-200 text-xs space-y-1";
+                card.innerHTML = `
+                    <div class="flex justify-between font-bold">
+                        <span>${r.title}</span>
+                        <span class="${r.status === 'Pendente' ? 'text-amber-600' : 'text-green-600'}">${r.status}</span>
+                    </div>
+                    <p class="text-gray-500">${r.location} | Data: ${r.date}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openTeamRequestModal() {
+            document.getElementById('req-periodic-title').value = '';
+            document.getElementById('req-periodic-location').value = '';
+            document.getElementById('req-periodic-date').value = '';
+
+            document.getElementById('modal-team-request-periodic').classList.remove('hidden');
+            document.getElementById('modal-team-request-periodic').classList.add('flex');
+        }
+
+        function submitTeamPeriodicRequest(e) {
+            e.preventDefault();
+            const title = document.getElementById('req-periodic-title').value;
+            const location = document.getElementById('req-periodic-location').value;
+            const date = document.getElementById('req-periodic-date').value;
+
+            state.periodicRequests.push({
+                id: Date.now(),
+                title,
+                location,
+                date,
+                team: state.currentUser.team,
+                status: 'Pendente'
+            });
+
+            closeModal('modal-team-request-periodic');
+            renderTeamRequests();
+            showToast('Solicitação de manutenção periódica enviada ao gestor!', 'success');
+        }
+
+        // Funções Utilitárias (Modais e Toasts)
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-gray-900 text-white';
+            if (type === 'success') bg = 'bg-green-700 text-white';
+            if (type === 'error') bg = 'bg-red-700 text-white';
+
+            toast.className = `px-4 py-3 rounded-xl shadow-xl text-xs font-bold transition-all duration-300 pointer-events-auto flex items-center gap-2 ${bg} fade-in`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'} text-sm"></i> ${message}`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        window.onload = function() {
+            // Mantém a tela de login visível inicialmente para simulação completa
+        };
+    </script>
+</body>
+</html>
