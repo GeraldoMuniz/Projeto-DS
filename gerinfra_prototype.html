@@ -236,8 +236,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Foto / Anexo (Opcional)</label>
-                        <input type="file" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-red-50 file:text-cinRed hover:file:bg-red-100 transition cursor-pointer">
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Foto / Anexo (Apenas JPG, máx. 5MB)</label>
+                        <input 
+                            type="file" 
+                            id="ticket-foto"
+                            name="foto" 
+                            accept=".jpg, .jpeg" 
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            onchange="validarArquivo(this)">
                     </div>
 
                     <button type="submit" class="w-full bg-cinRed hover:bg-cinDarkRed text-white font-bold py-3.5 rounded-xl shadow-md transition">
@@ -551,6 +557,10 @@
                     <p><strong>Local:</strong> <span id="sol-modal-loc">-</span></p>
                     <p><strong>Status Atual:</strong> <span id="sol-modal-status" class="font-bold text-cinRed">-</span></p>
                     <p><strong>Descrição:</strong> <span id="sol-modal-desc">-</span></p>
+                    <div id="sol-modal-foto-container" class="mt-2 hidden">
+                        <p class="font-bold mb-1">Foto Anexada:</p>
+                        <img id="sol-modal-foto" src="" alt="Foto do Chamado" class="w-full h-40 object-cover rounded-lg border">
+                    </div>
                 </div>
 
                 <div>
@@ -640,6 +650,15 @@
         </div>
     </div>
 
+    <!-- Modal Ampliar Foto no Gestor -->
+    <div id="modal-view-foto" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-4 shadow-2xl fade-in text-center relative">
+            <button onclick="closeModal('modal-view-foto')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-900 bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-gray-800 mb-3">Foto Anexada pelo Solicitante</h3>
+            <img id="modal-zoomed-img" src="" alt="Foto Ampliada" class="w-full max-h-[70vh] object-contain rounded-xl border">
+        </div>
+    </div>
+
     <!-- Sistema de Toast Notificação Customizado -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
@@ -662,6 +681,7 @@
                     status: 'Acompanhamento', // 'Triagem', 'Acompanhamento', 'Concluido', 'Retornado'
                     description: 'Está pingando água bem em cima dos computadores da fileira do meio.',
                     team: 'Hidráulica',
+                    foto: null,
                     feedback: '',
                     messages: [
                         { sender: 'Gestor Gerinfra', text: 'Chamado alocado para a Equipe de Hidráulica.', time: 'Hoje, 09:30' }
@@ -676,6 +696,7 @@
                     status: 'Acompanhamento',
                     description: 'Quedas repentinas de energia no rack principal.',
                     team: 'TI / Rede',
+                    foto: null,
                     feedback: '',
                     messages: []
                 },
@@ -688,6 +709,7 @@
                     status: 'Acompanhamento',
                     description: 'Unidade interna gerando poças de água no chão.',
                     team: 'Refrigeração',
+                    foto: null,
                     feedback: '',
                     messages: []
                 },
@@ -700,6 +722,7 @@
                     status: 'Acompanhamento',
                     description: 'Lâmpada tubular do teto apagada há 3 dias.',
                     team: 'Elétrica',
+                    foto: null,
                     feedback: '',
                     messages: []
                 },
@@ -712,6 +735,7 @@
                     status: 'Retornado',
                     description: 'Aparelho não liga e cheira a queimado.',
                     team: 'Refrigeração',
+                    foto: null,
                     feedback: '',
                     returnReason: 'Avaliamos o equipamento e o compressor estourou. Como está na garantia da LG, requer acionar a empresa fornecedora.',
                     messages: [
@@ -750,6 +774,27 @@
         };
 
         let kanbanSortables = [];
+
+        // Validador do arquivo JPG e Limite de 5MB
+        function validarArquivo(input) {
+            const arquivo = input.files[0];
+            if (arquivo) {
+                const tamanhoMaximo = 5 * 1024 * 1024; // 5 MB em bytes
+                
+                if (arquivo.size > tamanhoMaximo) {
+                    alert('O arquivo é muito grande! O tamanho máximo permitido é de 5 MB.');
+                    input.value = '';
+                    return;
+                }
+
+                const nomeArquivo = arquivo.name.toLowerCase();
+                if (!nomeArquivo.endsWith('.jpg') && !nomeArquivo.endsWith('.jpeg')) {
+                    alert('Formato inválido! Por favor, envie apenas arquivos JPG.');
+                    input.value = '';
+                    return;
+                }
+            }
+        }
 
         // Controle da Tela de Login
         function toggleTeamSelect() {
@@ -853,7 +898,7 @@
             }
         }
 
-        // Funções do Solicitante
+        // Funções do Solicitante (Com suporte à conversão de foto em Base64)
         function createTicket(e) {
             e.preventDefault();
             const location = document.getElementById('ticket-location').value;
@@ -861,30 +906,47 @@
             const type = typeInput ? typeInput.value : 'Elétrica';
             const urgency = document.getElementById('ticket-urgency').value;
             const description = document.getElementById('ticket-desc').value;
+            
+            const inputFoto = document.getElementById('ticket-foto');
+            const arquivo = inputFoto.files[0];
 
-            const newTicket = {
-                id: Math.floor(1000 + Math.random() * 9000),
-                title: `${type} em ${location}`,
-                location,
-                type,
-                urgency,
-                status: 'Triagem',
-                description,
-                team: 'Não alocada',
-                feedback: '',
-                messages: [
-                    { sender: 'Sistema', text: 'Chamado aberto com sucesso e enviado para a Gerinfra.', time: 'Agora' }
-                ]
+            const salvarChamado = (fotoBase64 = null) => {
+                const newTicket = {
+                    id: Math.floor(1000 + Math.random() * 9000),
+                    title: `${type} em ${location}`,
+                    location,
+                    type,
+                    urgency,
+                    status: 'Triagem',
+                    description,
+                    team: 'Não alocada',
+                    foto: fotoBase64,
+                    feedback: '',
+                    messages: [
+                        { sender: 'Sistema', text: 'Chamado aberto com sucesso e enviado para a Gerinfra.', time: 'Agora' }
+                    ]
+                };
+
+                state.tickets.unshift(newTicket);
+                showToast('Chamado enviado com sucesso!', 'success');
+                
+                document.getElementById('ticket-location').value = '';
+                document.getElementById('ticket-desc').value = '';
+                inputFoto.value = '';
+                
+                switchTab('solicitante', 'lista');
+                renderSolicitanteTickets();
             };
 
-            state.tickets.unshift(newTicket);
-            showToast('Chamado enviado com sucesso!', 'success');
-            
-            document.getElementById('ticket-location').value = '';
-            document.getElementById('ticket-desc').value = '';
-            
-            switchTab('solicitante', 'lista');
-            renderSolicitanteTickets();
+            if (arquivo) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    salvarChamado(event.target.result);
+                };
+                reader.readAsDataURL(arquivo);
+            } else {
+                salvarChamado(null);
+            }
         }
 
         function renderSolicitanteTickets() {
@@ -937,6 +999,16 @@
             document.getElementById('sol-modal-status').innerText = t.status;
             document.getElementById('sol-modal-desc').innerText = t.description;
 
+            // Exibir foto se houver
+            const fotoContainer = document.getElementById('sol-modal-foto-container');
+            const fotoImg = document.getElementById('sol-modal-foto');
+            if (t.foto) {
+                fotoImg.src = t.foto;
+                fotoContainer.classList.remove('hidden');
+            } else {
+                fotoContainer.classList.add('hidden');
+            }
+
             const msgContainer = document.getElementById('sol-modal-messages');
             msgContainer.innerHTML = '';
 
@@ -968,7 +1040,7 @@
             document.getElementById('modal-solicitante-history').classList.add('flex');
         }
 
-        // Funções do Gestor Gerinfra
+        // Funções do Gestor Gerinfra (Com exibição da foto nos cards do painel e modal de ampliação)
         function renderManagerDashboard() {
             renderManagerKanban();
             renderManagerReturns();
@@ -1017,6 +1089,16 @@
                     `;
                 }
 
+                // Miniatura da foto caso exista
+                let fotoHTML = '';
+                if (t.foto) {
+                    fotoHTML = `
+                        <div class="mt-2">
+                            <img src="${t.foto}" alt="Miniatura" onclick="openZoomedPhoto('${t.foto}')" class="w-full h-24 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition" title="Clique para ampliar a foto">
+                        </div>
+                    `;
+                }
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <span class="text-[10px] font-bold text-gray-400">#${t.id} - ${t.type}</span>
@@ -1025,6 +1107,7 @@
                     <h5 class="font-bold text-gray-900 text-sm">${t.title}</h5>
                     <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> ${t.location}</p>
                     <p class="text-xs text-gray-600 italic line-clamp-2">"${t.description}"</p>
+                    ${fotoHTML}
                     ${actionHTML}
                 `;
 
@@ -1036,6 +1119,12 @@
             document.getElementById('count-triagem').innerText = cTri;
             document.getElementById('count-acompanhamento').innerText = cAcomp;
             document.getElementById('count-historico').innerText = cHist;
+        }
+
+        function openZoomedPhoto(fotoUrl) {
+            document.getElementById('modal-zoomed-img').src = fotoUrl;
+            document.getElementById('modal-view-foto').classList.remove('hidden');
+            document.getElementById('modal-view-foto').classList.add('flex');
         }
 
         function openAllocateModal(ticketId) {
@@ -1080,6 +1169,9 @@
             returnedTickets.forEach(t => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-5 rounded-2xl shadow-sm border border-orange-200 space-y-3";
+                
+                let fotoHTML = t.foto ? `<div class="mt-2"><img src="${t.foto}" onclick="openZoomedPhoto('${t.foto}')" class="w-32 h-24 object-cover rounded-lg border cursor-pointer"></div>` : '';
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
@@ -1089,6 +1181,7 @@
                         </div>
                         <span class="px-2.5 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">Retornado</span>
                     </div>
+                    ${fotoHTML}
                     <div class="bg-red-50 p-3 rounded-xl border border-red-100 text-xs text-red-900">
                         <strong>Motivo do Retorno:</strong> ${t.returnReason || 'Necessidade de intervenção externa.'}
                     </div>
@@ -1254,6 +1347,7 @@
                 status: p.team ? 'Acompanhamento' : 'Triagem',
                 description: `Execução programada da manutenção periódica agendada para a data ${p.date}.`,
                 team: p.team || 'Não alocada',
+                foto: null,
                 feedback: '',
                 messages: [
                     { sender: 'Sistema Agendador', text: `Gerado automaticamente via manutenção periódica em ${p.date}.`, time: 'Agora' }
