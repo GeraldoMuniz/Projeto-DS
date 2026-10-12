@@ -1,0 +1,402 @@
+{
+  "id": "gerinfra",
+  "realm": "Local",
+  "enabled": true,
+  "sslRequired": "external",
+  "defaultSignatureAlgorithm": "RS256",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "sys_gerinfra-admin",
+        "description": "Acesso total (AccessRole.ADMIN)",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "sys_gerinfra-users",
+        "description": "Acesso padrão (AccessRole.USER)",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "offline_access",
+        "description": "${role_offline-access}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "uma_authorization",
+        "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "default-roles-gerinfra",
+        "description": "${role_default-roles}",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "offline_access",
+            "uma_authorization"
+          ],
+          "client": {
+            "account": [
+              "view-profile",
+              "manage-account"
+            ]
+          }
+        },
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "sys_gerinfra-team",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-eletrica",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-hidraulica",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-refrigeracao",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-ti-rede",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-mobiliario",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-gerinfra",
+    "description": "${role_default-roles}",
+    "composite": true,
+    "clientRole": false,
+    "containerId": "gerinfra"
+  },
+  "requiredCredentials": [
+    "password"
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Test",
+      "email": "admin@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-admin",
+        "sys_gerinfra-users"
+      ],
+      "groups": [],
+      "id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "username": "user",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Solicitante",
+      "lastName": "Test",
+      "email": "user@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-users"
+      ],
+      "groups": [],
+      "id": "00000000-0000-4000-8000-000000000002"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "username": "eletrica",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Equipe",
+      "lastName": "eletrica",
+      "email": "eletrica@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "equipe",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-team",
+        "sys_gerinfra-team-eletrica"
+      ],
+      "groups": []
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "username": "hidraulica",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Equipe",
+      "lastName": "hidraulica",
+      "email": "hidraulica@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "equipe",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-team",
+        "sys_gerinfra-team-hidraulica"
+      ],
+      "groups": []
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "username": "refrigeracao",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Equipe",
+      "lastName": "refrigeracao",
+      "email": "refrigeracao@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "equipe",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-team",
+        "sys_gerinfra-team-refrigeracao"
+      ],
+      "groups": []
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000013",
+      "username": "ti-rede",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Equipe",
+      "lastName": "ti-rede",
+      "email": "ti-rede@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "equipe",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-team",
+        "sys_gerinfra-team-ti-rede"
+      ],
+      "groups": []
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000014",
+      "username": "mobiliario",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Equipe",
+      "lastName": "mobiliario",
+      "email": "mobiliario@dev.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "equipe",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-gerinfra",
+        "sys_gerinfra-team",
+        "sys_gerinfra-team-mobiliario"
+      ],
+      "groups": []
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "gerinfra-back",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "rootUrl": "http://localhost:3000",
+      "adminUrl": "http://localhost:3000",
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "secret": "dev-secret",
+      "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "name": "Client Host",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientHost",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientHost",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "Client ID",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientId",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientId",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "Client IP Address",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientAddress",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientAddress",
+            "jsonType.label": "String"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "gerinfra-front",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:5173",
+      "adminUrl": "http://localhost:5173",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:4173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:4173"
+      ],
+      "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "name": "audience-gerinfra-back",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "gerinfra-back",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:4173/*"
+      }
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "role_list",
+    "profile",
+    "email",
+    "roles",
+    "web-origins",
+    "acr"
+  ],
+  "defaultOptionalClientScopes": [
+    "offline_access",
+    "address",
+    "phone",
+    "microprofile-jwt"
+  ]
+}
