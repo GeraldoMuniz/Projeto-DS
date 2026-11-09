@@ -1,5 +1,15 @@
 # Validação realizada
 
+## Limpeza local de chamados e exemplos — 9 de novembro de 2026
+
+- PostgreSQL 14.2 dedicado: sete cenários passaram (oito testes contando o principal).
+- Verificados remoção seletiva do seed, remoção explícita de todos os chamados manuais e de exemplo, exclusão em cascata das mensagens, prévias sem alteração, repetição sem efeitos adicionais e preservação de vínculos, dados de apoio e sequências.
+- As verificações da limpeza de todos os chamados exigem um banco de teste inicialmente vazio e conferem os IDs das fixtures antes de executar a exclusão.
+- Comandos reais `seed:demo`, `chamados:conferir` e `chamados:limpar` executados no banco temporário: a prévia informou cinco chamados, duas periódicas e uma solicitação; a limpeza removeu essas quantidades e a prévia seguinte informou zero.
+- Os 29 testes unitários do backend e o Biome CI passaram, incluindo os novos scripts de manutenção.
+
+O comando de limpeza não foi executado no banco do usuário. Ele deve ser rodado localmente após atualizar o projeto. Nenhuma alteração de schema ou migration adicional é necessária para esta mudança. Os novos exemplos ficam para cadastro posterior pela interface.
+
 ## Indicadores do gestor — 9 de novembro de 2026
 
 Alteração implementada a partir da branch `mvp_funcional` (`d13597f`).

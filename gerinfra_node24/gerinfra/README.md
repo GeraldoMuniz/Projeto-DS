@@ -23,11 +23,34 @@ npm ci
 npm run prisma:generate
 npm run migration:run
 node prisma/seed.mjs
-npm run seed:demo
 npm run dev
 ```
 
-`seed:demo` é opcional: importa os cinco chamados e as periódicas do HTML. Ele não redefine registros já existentes com os mesmos IDs. Não use esse seed em um banco institucional com dados reais.
+O sistema inicia sem chamados de exemplo. O seed de tabelas de apoio (`node prisma/seed.mjs`) não cria chamados ou manutenções. Se quiser os exemplos antigos do HTML, `npm run seed:demo` é opcional: importa cinco chamados, duas periódicas e uma solicitação, sem redefinir registros já existentes com os mesmos IDs. Não use esse seed em um banco institucional com dados reais.
+
+### Remover os exemplos antigos e cadastrar novos depois
+
+Para remover **todos os chamados, inclusive os cadastrados manualmente**, e suas mensagens, execute dentro de `gerinfra-back`:
+
+```bash
+npm run chamados:limpar
+```
+
+Esse comando também remove os exemplos antigos de periódicas e solicitações quando ainda podem ser identificados e não têm vínculos preservados. As contas de acesso, tabelas de apoio e sequências de IDs são mantidas. Manutenções periódicas e solicitações criadas manualmente não são apagadas. Para visualizar as quantidades antes de remover dados, use `npm run chamados:conferir`.
+
+Depois, recarregue a página: a lista de chamados e os gráficos ficarão vazios. Quando quiser, cadastre os novos chamados pela interface. Não execute `seed:demo` nesse fluxo, pois ele importa novamente os exemplos antigos.
+
+Se quiser remover **somente os exemplos antigos**, preservando chamados manuais, use:
+
+```bash
+npm run demo:limpar
+```
+
+O comando usa a conexão `DATABASE_URL` do `.env` do backend e informa as quantidades removidas. Ele identifica os chamados pelos IDs do seed, solicitante e mensagem original de importação. As mensagens desses chamados também são removidas. Manutenções e solicitações só são excluídas quando correspondem ao conteúdo original e não têm vínculos com dados preservados; registros alterados são mantidos e informados no resultado. Cadastros manuais, usuários e tabelas de apoio permanecem. Não há reset do banco ou das sequências de IDs.
+
+Para conferir o que seria removido sem alterar dados, use `npm run demo:conferir`. Depois da limpeza, recarregue a página. Se só existiam os exemplos, as listas e os gráficos ficarão vazios. Os registros preservados, caso existam, continuam aparecendo.
+
+Quando quiser novos exemplos, cadastre os chamados pelo perfil de solicitante e faça a alocação, atendimento, retorno e conclusão pelos perfis correspondentes. Assim os indicadores usarão os novos cadastros.
 
 ### 3. Iniciar o frontend em outro terminal
 
@@ -102,6 +125,8 @@ npm run test:e2e
 ```
 
 `test:e2e` precisa do PostgreSQL já migrado e usa um servidor JWKS de teste para emitir tokens assinados; a API valida os tokens com os guards reais. O teste usa registros próprios e remove seus dados ao terminar. Não requer que o Keycloak esteja disponível. Ele inicia a API na porta 3101 (`E2E_PORT` permite mudar a porta).
+
+`npm run test:demo` verifica a limpeza em um PostgreSQL de teste dedicado e já migrado. Defina `DEMO_TEST_DATABASE_URL` com a conexão desse banco vazio. A suíte não usa a conexão normal do `.env`: ela importa o seed e verifica a limpeza seletiva, a limpeza de todos os chamados, as prévias, vínculos e sequências. Não execute essa suíte no banco da aplicação em uso.
 
 Frontend:
 

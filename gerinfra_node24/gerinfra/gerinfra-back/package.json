@@ -21,7 +21,12 @@
     "migration:generate": "prisma migrate dev --schema prisma/schema.prisma",
     "migration:run": "prisma migrate deploy --schema prisma/schema.prisma",
     "prepare": "husky",
-    "seed:demo": "node prisma/seed-demo.mjs"
+    "seed:demo": "node prisma/seed-demo.mjs",
+    "demo:conferir": "node prisma/clean-demo.mjs --dry-run",
+    "demo:limpar": "node prisma/clean-demo.mjs",
+    "chamados:conferir": "node prisma/clean-demo.mjs --all-tickets --dry-run",
+    "chamados:limpar": "node prisma/clean-demo.mjs --all-tickets",
+    "test:demo": "node --test test/demo-cleanup.test.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.24",
