@@ -1,5 +1,14 @@
 # Validação realizada
 
+## Novos exemplos de manutenção — 9 de novembro de 2026
+
+- Novo comando `npm run seed:novos`: nove chamados, cinco abertos e quatro concluídos (dois com sucesso e dois sem sucesso). Todos os seis estados e as cinco especialidades estão representados.
+- PostgreSQL 14.2 dedicado: sete testes dos novos exemplos passaram, cobrindo resultados, datas, importações repetidas e concorrentes, preservação de edições/cadastros manuais, IDs gerados e limpeza conjunta com os exemplos antigos.
+- Os oito testes de limpeza existentes e os 29 testes unitários do backend passaram. Biome CI passou nos testes e nos scripts alterados.
+- O comando real de importação foi executado duas vezes: a primeira criou nove chamados; a segunda reconheceu os mesmos nove e não criou duplicatas. A prévia e a limpeza seletiva reconheceram os novos exemplos.
+
+Os dados são fictícios, com datas relativas à primeira importação e resultados de conclusão explícitos. O comando não altera registros existentes nem exige migration adicional. A importação foi testada apenas no banco temporário; para carregar no banco local do usuário, execute `npm run seed:novos` após atualizar a branch.
+
 ## Limpeza local de chamados e exemplos — 9 de novembro de 2026
 
 - PostgreSQL 14.2 dedicado: sete cenários passaram (oito testes contando o principal).

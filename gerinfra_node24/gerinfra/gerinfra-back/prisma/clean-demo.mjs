@@ -8,12 +8,23 @@ import {
   DEMO_REQUESTER_ID,
   DEMO_TICKETS,
 } from './demo-data.mjs';
+import { EXAMPLE_REQUESTER_ID, EXAMPLE_TICKETS, exampleMessage } from './example-data.mjs';
 
 // Não basta reconhecer o ID: a conta de demonstração também pode criar dados manuais.
-const ticketWhere = {
+const legacyTicketWhere = {
   id: { in: DEMO_TICKETS.map(({ id }) => id) },
   requesterId: DEMO_REQUESTER_ID,
   messages: { some: DEMO_MESSAGE },
+};
+const exampleTicketWhere = {
+  requesterId: EXAMPLE_REQUESTER_ID,
+  messages: {
+    some: { OR: EXAMPLE_TICKETS.map(({ key }) => exampleMessage(key)) },
+  },
+};
+const ticketWhere = { OR: [legacyTicketWhere, exampleTicketWhere] };
+const recognizedTickets = {
+  OR: [{ id: { in: DEMO_TICKETS.map(({ id }) => id) } }, exampleTicketWhere],
 };
 const periodicIdentity = {
   OR: DEMO_PERIODIC,
@@ -51,7 +62,7 @@ export async function cleanDemoData(db, { dryRun = false, allTickets = false } =
         tickets: allTickets
           ? ticketCount
           : await tx.ticket.count({
-              where: { id: { in: DEMO_TICKETS.map(({ id }) => id) } },
+              where: recognizedTickets,
             }),
         periodic: await tx.periodicMaintenance.count({
           where: { id: { in: DEMO_PERIODIC.map(({ id }) => id) } },
@@ -126,7 +137,7 @@ async function main() {
     const preserved = Object.values(result.preserved).reduce((sum, count) => sum + count, 0);
     if (preserved) {
       console.log(
-        `Preservados: ${preserved} registro(s) nos IDs dos exemplos por alterações, vínculos ou identificação insuficiente.`,
+        `Preservados: ${preserved} registro(s) por alterações, vínculos ou identificação insuficiente.`,
       );
     }
     console.log(

@@ -26,7 +26,33 @@ node prisma/seed.mjs
 npm run dev
 ```
 
-O sistema inicia sem chamados de exemplo. O seed de tabelas de apoio (`node prisma/seed.mjs`) não cria chamados ou manutenções. Se quiser os exemplos antigos do HTML, `npm run seed:demo` é opcional: importa cinco chamados, duas periódicas e uma solicitação, sem redefinir registros já existentes com os mesmos IDs. Não use esse seed em um banco institucional com dados reais.
+O sistema inicia sem chamados de exemplo. O seed de tabelas de apoio (`node prisma/seed.mjs`) não cria chamados ou manutenções. Para os novos exemplos com resultados nos gráficos, use `npm run seed:novos`, conforme abaixo. Se quiser os exemplos antigos do HTML, `npm run seed:demo` continua opcional: importa cinco chamados, duas periódicas e uma solicitação, sem redefinir registros já existentes com os mesmos IDs.
+
+### Carregar novos exemplos de chamados
+
+Com o banco rodando e as migrations aplicadas, execute dentro de `gerinfra-back`:
+
+```bash
+npm run seed:novos
+```
+
+O comando adiciona **nove chamados fictícios** para apresentar os indicadores:
+
+| Situação | Quantidade |
+| --- | --- |
+| Em triagem, ainda sem equipe | 1 |
+| Alocado à equipe | 1 |
+| Em análise | 1 |
+| Em andamento | 1 |
+| Retornado à gestão, aguardando apoio | 1 |
+| Concluído com sucesso | 2 |
+| Concluído sem sucesso | 2 |
+
+Os exemplos abrangem as cinco especialidades. Conclusões incluem resultado, feedback e data; abertos não recebem resultado de conclusão. As datas são relativas ao dia da primeira importação, permitindo testar o filtro por período. Com apenas esses nove exemplos, os gráficos mostram cinco chamados abertos, um aguardando apoio e taxa de sucesso de 50% entre as quatro conclusões.
+
+Depois, atualize a página do gestor e abra **Gráficos e indicadores**. O comando gera os IDs pelo banco e identifica cada exemplo por uma mensagem própria: executá-lo novamente não duplica os registros nem altera chamados existentes, mesmo que tenham sido editados pela interface. Ele não limpa dados antes de importar e não exige uma migration nova. Esses exemplos são para o ambiente local de demonstração.
+
+Para remover somente os exemplos, antigos ou novos, use `npm run demo:limpar`. Para remover todos os chamados, incluindo os manuais, use `npm run chamados:limpar`.
 
 ### Remover os exemplos antigos e cadastrar novos depois
 
@@ -38,15 +64,15 @@ npm run chamados:limpar
 
 Esse comando também remove os exemplos antigos de periódicas e solicitações quando ainda podem ser identificados e não têm vínculos preservados. As contas de acesso, tabelas de apoio e sequências de IDs são mantidas. Manutenções periódicas e solicitações criadas manualmente não são apagadas. Para visualizar as quantidades antes de remover dados, use `npm run chamados:conferir`.
 
-Depois, recarregue a página: a lista de chamados e os gráficos ficarão vazios. Quando quiser, cadastre os novos chamados pela interface. Não execute `seed:demo` nesse fluxo, pois ele importa novamente os exemplos antigos.
+Depois, recarregue a página: a lista de chamados e os gráficos ficarão vazios. Quando quiser, cadastre os novos chamados pela interface ou execute `npm run seed:novos`. O comando `seed:demo` importa novamente os exemplos antigos.
 
-Se quiser remover **somente os exemplos antigos**, preservando chamados manuais, use:
+Se quiser remover **somente os exemplos antigos e novos**, preservando chamados manuais, use:
 
 ```bash
 npm run demo:limpar
 ```
 
-O comando usa a conexão `DATABASE_URL` do `.env` do backend e informa as quantidades removidas. Ele identifica os chamados pelos IDs do seed, solicitante e mensagem original de importação. As mensagens desses chamados também são removidas. Manutenções e solicitações só são excluídas quando correspondem ao conteúdo original e não têm vínculos com dados preservados; registros alterados são mantidos e informados no resultado. Cadastros manuais, usuários e tabelas de apoio permanecem. Não há reset do banco ou das sequências de IDs.
+O comando usa a conexão `DATABASE_URL` do `.env` do backend e informa as quantidades removidas. Ele identifica os chamados antigos pelos IDs do seed, solicitante e mensagem original de importação; os novos são reconhecidos pelo solicitante e pela mensagem própria de cada exemplo, sem depender de IDs fixos. As mensagens desses chamados também são removidas. Manutenções e solicitações só são excluídas quando correspondem ao conteúdo original e não têm vínculos com dados preservados; registros alterados são mantidos e informados no resultado. Cadastros manuais, usuários e tabelas de apoio permanecem. Não há reset do banco ou das sequências de IDs.
 
 Para conferir o que seria removido sem alterar dados, use `npm run demo:conferir`. Depois da limpeza, recarregue a página. Se só existiam os exemplos, as listas e os gráficos ficarão vazios. Os registros preservados, caso existam, continuam aparecendo.
 
@@ -127,6 +153,8 @@ npm run test:e2e
 `test:e2e` precisa do PostgreSQL já migrado e usa um servidor JWKS de teste para emitir tokens assinados; a API valida os tokens com os guards reais. O teste usa registros próprios e remove seus dados ao terminar. Não requer que o Keycloak esteja disponível. Ele inicia a API na porta 3101 (`E2E_PORT` permite mudar a porta).
 
 `npm run test:demo` verifica a limpeza em um PostgreSQL de teste dedicado e já migrado. Defina `DEMO_TEST_DATABASE_URL` com a conexão desse banco vazio. A suíte não usa a conexão normal do `.env`: ela importa o seed e verifica a limpeza seletiva, a limpeza de todos os chamados, as prévias, vínculos e sequências. Não execute essa suíte no banco da aplicação em uso.
+
+`npm run test:exemplos` usa a mesma variável de teste e verifica os novos exemplos, suas conclusões e datas, a repetição da importação e a limpeza. Execute as duas suítes separadamente no banco dedicado.
 
 Frontend:
 
