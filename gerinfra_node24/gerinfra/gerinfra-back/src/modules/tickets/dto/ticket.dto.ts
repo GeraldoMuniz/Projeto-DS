@@ -28,6 +28,7 @@ export class TicketActionDto extends createZodDto(
       version: z.number().int().nonnegative(),
       team: z.enum(TEAM_CODES).optional(),
       status: z.enum(['EM_ANALISE', 'EM_ANDAMENTO']).optional(),
+      outcome: z.enum(['SUCESSO', 'SEM_SUCESSO']).optional(),
       text: text().optional(),
       urgency: z.enum(['URGENTE', 'MODERADO', 'LEVE']).optional(),
       audience: z.enum(['REQUESTER', 'TEAM']).optional(),

@@ -12,10 +12,12 @@ import {
   TEAM_LABELS,
   URGENCIES,
   URGENCY_LABELS,
+  OUTCOME_LABELS,
   type Team,
   type Urgency,
   type Profile,
   type TicketAction,
+  type TicketOutcome,
 } from "../maintenance.types";
 import { DataState, StatusBadge } from "./Common";
 export function TicketDetail({
@@ -35,6 +37,7 @@ export function TicketDetail({
   const [message, setMessage] = useState("");
   const [audience, setAudience] = useState<"REQUESTER" | "TEAM">("REQUESTER");
   const [feedback, setFeedback] = useState("");
+  const [outcome, setOutcome] = useState<TicketOutcome | "">("");
   const [reason, setReason] = useState("");
   const closed = ticket?.status === "CONCLUIDO";
   const returned = ticket?.status === "RETORNADO";
@@ -111,10 +114,20 @@ export function TicketDetail({
                     <p>{ticket.returnReason}</p>
                   </div>
                 )}
-                {ticket.feedback && (
-                  <div className="notice success">
-                    <strong>Feedback da conclusão</strong>
-                    <p>{ticket.feedback}</p>
+                {closed && (
+                  <div
+                    className={`notice ${ticket.outcome === "SUCESSO" ? "success" : "warning"}`}
+                  >
+                    <strong>
+                      Resultado da conclusão:{" "}
+                      {ticket.outcome
+                        ? OUTCOME_LABELS[ticket.outcome]
+                        : "Não informado"}
+                    </strong>
+                    {ticket.closedAt && (
+                      <p>Concluído em {formatTime(ticket.closedAt)}</p>
+                    )}
+                    {ticket.feedback && <p>{ticket.feedback}</p>}
                   </div>
                 )}
                 {!closed && profile === "gestor" && (
@@ -146,13 +159,31 @@ export function TicketDetail({
                         </button>
                       </div>
                       {returned && (
-                        <button
-                          className="button success"
-                          disabled={busy}
-                          onClick={() => void act({ action: "CLOSE" })}
-                        >
-                          Fechar chamado administrativamente
-                        </button>
+                        <>
+                          <h3>Encerramento administrativo</h3>
+                          <CompletionFields
+                            outcome={outcome}
+                            onOutcomeChange={setOutcome}
+                            feedback={feedback}
+                            onFeedbackChange={setFeedback}
+                            disabled={busy}
+                            administrative
+                          />
+                          <button
+                            className="button primary"
+                            disabled={busy || !outcome || !feedback.trim()}
+                            onClick={() => {
+                              if (outcome)
+                                void act({
+                                  action: "CLOSE",
+                                  outcome,
+                                  text: feedback.trim(),
+                                });
+                            }}
+                          >
+                            Fechar chamado administrativamente
+                          </button>
+                        </>
                       )}
                     </section>
                   </Can>
@@ -198,22 +229,24 @@ export function TicketDetail({
                               Em andamento
                             </button>
                           </div>
-                          <label>
-                            Feedback da solução
-                            <textarea
-                              value={feedback}
-                              onChange={(e) => setFeedback(e.target.value)}
-                              maxLength={5000}
-                              rows={3}
-                              placeholder="Explique o que foi realizado…"
-                            />
-                          </label>
+                          <CompletionFields
+                            outcome={outcome}
+                            onOutcomeChange={setOutcome}
+                            feedback={feedback}
+                            onFeedbackChange={setFeedback}
+                            disabled={busy}
+                          />
                           <button
-                            className="button success"
-                            disabled={busy || !feedback.trim()}
-                            onClick={() =>
-                              void act({ action: "COMPLETE", text: feedback })
-                            }
+                            className="button primary"
+                            disabled={busy || !outcome || !feedback.trim()}
+                            onClick={() => {
+                              if (outcome)
+                                void act({
+                                  action: "COMPLETE",
+                                  outcome,
+                                  text: feedback.trim(),
+                                });
+                            }}
                           >
                             Concluir chamado
                           </button>
@@ -336,5 +369,53 @@ export function TicketDetail({
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+function CompletionFields({
+  outcome,
+  onOutcomeChange,
+  feedback,
+  onFeedbackChange,
+  disabled,
+  administrative = false,
+}: {
+  outcome: TicketOutcome | "";
+  onOutcomeChange: (value: TicketOutcome | "") => void;
+  feedback: string;
+  onFeedbackChange: (value: string) => void;
+  disabled: boolean;
+  administrative?: boolean;
+}) {
+  return (
+    <>
+      <label>
+        Resultado da conclusão
+        <select
+          value={outcome}
+          onChange={(event) =>
+            onOutcomeChange(event.target.value as TicketOutcome | "")
+          }
+          disabled={disabled}
+          required
+        >
+          <option value="">Selecione o resultado</option>
+          <option value="SUCESSO">Bem-sucedido — problema resolvido</option>
+          <option value="SEM_SUCESSO">Sem sucesso — problema não resolvido</option>
+        </select>
+      </label>
+      <label>
+        {administrative ? "Justificativa do encerramento" : "Feedback da solução"}
+        <textarea
+          value={feedback}
+          onChange={(event) => onFeedbackChange(event.target.value)}
+          disabled={disabled}
+          required
+          maxLength={5000}
+          rows={3}
+          placeholder="Explique a solução aplicada ou o motivo do encerramento sem sucesso…"
+        />
+      </label>
+    </>
   );
 }

@@ -196,6 +196,8 @@ test('Gerinfra — integração HTTP com persistência, JWT/JWKS e RBAC', {
       });
       ticket = result.body.data;
       assert.equal(ticket.status, 'RETORNADO');
+      assert.equal(ticket.outcome, null);
+      assert.equal(ticket.closedAt, null);
       assert.equal(
         (
           await call(`/tickets/${ticket.id}/actions`, 'team', 'POST', {
@@ -221,16 +223,80 @@ test('Gerinfra — integração HTTP com persistência, JWT/JWKS e RBAC', {
         ).status,
         400,
       );
+      assert.equal(
+        (
+          await call(`/tickets/${ticket.id}/actions`, 'team', 'POST', {
+            action: 'COMPLETE',
+            text: 'Feedback sem classificação.',
+            version: ticket.version,
+          })
+        ).status,
+        400,
+      );
       result = await call(`/tickets/${ticket.id}/actions`, 'team', 'POST', {
         action: 'COMPLETE',
         text: 'Lâmpada substituída.',
+        outcome: 'SUCESSO',
         version: ticket.version,
       });
       ticket = result.body.data;
       assert.equal(ticket.status, 'CONCLUIDO');
       assert.equal(ticket.feedback, 'Lâmpada substituída.');
+      assert.equal(ticket.outcome, 'SUCESSO');
+      assert.ok(!Number.isNaN(Date.parse(ticket.closedAt)));
+      const saved = await db.ticket.findUnique({ where: { id: ticket.id } });
+      assert.equal(saved.outcome, 'SUCESSO');
+      assert.ok(saved.closedAt instanceof Date);
       assert.equal((await call(`/tickets/${ticket.id}`, 'user')).body.data.status, 'CONCLUIDO');
     });
+    await t.test(
+      'fechamento administrativo exige resultado e justificativa e persiste insucesso',
+      async () => {
+        const created = await call('/tickets', 'user', 'POST', {
+          location: marker,
+          type: 'ELETRICA',
+          urgency: 'MODERADO',
+          description: 'Equipamento sem reparo.',
+        });
+        let returned = created.body.data;
+        let result = await call(`/tickets/${returned.id}/actions`, 'manager', 'POST', {
+          action: 'ALLOCATE',
+          team: 'ELETRICA',
+          version: returned.version,
+        });
+        returned = result.body.data;
+        result = await call(`/tickets/${returned.id}/actions`, 'team', 'POST', {
+          action: 'RETURN',
+          text: 'Solicitada substituição do equipamento.',
+          version: returned.version,
+        });
+        returned = result.body.data;
+        for (const fields of [{ text: 'Sem reparo.' }, { outcome: 'SEM_SUCESSO' }]) {
+          assert.equal(
+            (
+              await call(`/tickets/${returned.id}/actions`, 'manager', 'POST', {
+                action: 'CLOSE',
+                version: returned.version,
+                ...fields,
+              })
+            ).status,
+            400,
+          );
+        }
+        result = await call(`/tickets/${returned.id}/actions`, 'manager', 'POST', {
+          action: 'CLOSE',
+          version: returned.version,
+          text: 'Encerrado sem reparo; substituição não aprovada.',
+          outcome: 'SEM_SUCESSO',
+        });
+        assert.equal(result.status, 201);
+        const saved = await db.ticket.findUnique({ where: { id: returned.id } });
+        assert.equal(saved.status, 'CONCLUIDO');
+        assert.equal(saved.outcome, 'SEM_SUCESSO');
+        assert.equal(saved.feedback, 'Encerrado sem reparo; substituição não aprovada.');
+        assert.ok(saved.closedAt instanceof Date);
+      },
+    );
     await t.test('aprova solicitação uma única vez e aplica escopo às periódicas', async () => {
       let result = await call('/periodic/requests', 'team', 'POST', {
         title: 'Revisão de lâmpadas',

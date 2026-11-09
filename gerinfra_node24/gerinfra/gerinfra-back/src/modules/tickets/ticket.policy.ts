@@ -51,9 +51,12 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
               : 'Informe o motivo do retorno.',
           );
         if (dto.action === 'COMPLETE') {
+          if (!dto.outcome) throw new BadRequestException('Informe o resultado da conclusão.');
           data.status = 'CONCLUIDO';
           data.feedback = dto.text;
-          message = `Chamado concluído: ${dto.text}`;
+          data.outcome = dto.outcome;
+          data.closedAt = new Date();
+          message = `Chamado concluído ${dto.outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso'}: ${dto.text}`;
         } else {
           data.status = 'RETORNADO';
           data.returnReason = dto.text;
@@ -65,9 +68,14 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
       if (!admin) throw new ForbiddenException('Somente o gestor pode fechar administrativamente.');
       if (ticket.status !== 'RETORNADO')
         throw new ConflictException('Fechamento administrativo exige um chamado retornado.');
+      if (!dto.text?.trim())
+        throw new BadRequestException('Informe o feedback do fechamento administrativo.');
+      if (!dto.outcome) throw new BadRequestException('Informe o resultado da conclusão.');
       data.status = 'CONCLUIDO';
-      data.feedback = 'Chamado fechado administrativamente pela Gerinfra após retorno.';
-      message = String(data.feedback);
+      data.feedback = dto.text;
+      data.outcome = dto.outcome;
+      data.closedAt = new Date();
+      message = `Chamado fechado administrativamente ${dto.outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso'}: ${dto.text}`;
       break;
     case 'MESSAGE':
       if (!admin && !operator)

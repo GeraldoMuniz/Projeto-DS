@@ -28,9 +28,9 @@ O gestor vê todas as mensagens. A equipe vê o histórico dos chamados que lhe 
 | Alocar / Reencaminhar | Gestor | ACOMPANHAMENTO, define equipe e limpa motivo de retorno atual |
 | Iniciar análise | Equipe atribuída | EM_ANALISE |
 | Iniciar execução | Equipe atribuída | EM_ANDAMENTO |
-| Concluir | Equipe atribuída | CONCLUIDO, com feedback obrigatório |
+| Concluir | Equipe atribuída | CONCLUIDO, com feedback e resultado obrigatórios; registra data de encerramento |
 | Retornar | Equipe atribuída | RETORNADO, com justificativa obrigatória |
-| Fechar administrativamente | Gestor | CONCLUIDO, somente após retorno |
+| Fechar administrativamente | Gestor | CONCLUIDO, somente após retorno, com feedback e resultado obrigatórios |
 | Enviar mensagem | Gestor / equipe atribuída | Registro na linha do tempo; equipe envia ao solicitante |
 | Alterar prioridade | Gestor / equipe atribuída | URGENTE, MODERADO ou LEVE |
 
@@ -38,7 +38,7 @@ Chamados retornados continuam visíveis na fila da equipe; precisam de reencamin
 
 ## Persistência
 
-`Ticket` armazena o estado, solicitante, equipe e versão; `TicketMessage` mantém autor, destinatário e data. `PeriodicMaintenance` armazena uma programação por data, e `PeriodicRequest` registra a solicitação da equipe e sua decisão. As tabelas originais de exemplo permanecem como referência.
+`Ticket` armazena o estado, solicitante, equipe e versão, além de `outcome` (`SUCESSO` ou `SEM_SUCESSO`) e `closedAt` na conclusão; `TicketMessage` mantém autor, destinatário e data. Os campos de conclusão são nullable para preservar registros antigos sem inferir resultados ou datas. `PeriodicMaintenance` armazena uma programação por data, e `PeriodicRequest` registra a solicitação da equipe e sua decisão. As tabelas originais de exemplo permanecem como referência.
 
 A exclusão de periódicas usa `active=false`, preservando os vínculos dos chamados já gerados. Aprovar uma solicitação altera seu estado e cria a periódica numa única transação. Uma solicitação já decidida recebe 409. A combinação de periódica e data é única em `Ticket`, e a geração bloqueia a versão antes de criar a ocorrência. Listas são paginadas pela API, com limite máximo de 100; o service frontend percorre as páginas para compor os quadros completos do protótipo.
 
@@ -70,8 +70,16 @@ Exemplo de alocação:
 Exemplo de conclusão:
 
 ```json
-{ "action": "COMPLETE", "text": "Lâmpada substituída.", "version": 3 }
+{ "action": "COMPLETE", "outcome": "SUCESSO", "text": "Lâmpada substituída.", "version": 3 }
 ```
+
+`CLOSE` também exige `outcome` e `text`. A mudança de estado, resultado, data e mensagem é transacional e usa o mesmo controle de versão das demais ações.
+
+## Indicadores do gestor
+
+A aba exclusiva do gestor agrega todos os chamados carregados pelo service paginado existente. Os filtros são próprios da aba: período de abertura inclusivo no fuso `America/Recife`, equipe e resultado. `RETORNADO` conta como aberto e aguardando apoio; não representa conclusão sem sucesso. A taxa de sucesso é `SUCESSO / (SUCESSO + SEM_SUCESSO)` entre chamados `CONCLUIDO`; resultados antigos ausentes ficam fora do denominador e aparecem separadamente. Sem resultados classificados, a taxa aparece como indisponível.
+
+Os gráficos usam barras HTML/CSS com contagens e percentuais textuais. O relatório impresso inclui o recorte e a data de emissão, gráficos, motivos de apoio e todos os chamados selecionados. Os dados mostram a situação atual dos chamados abertos no período escolhido, não um histórico de mudanças de status. Para volumes maiores, a agregação pode ser migrada para um endpoint dedicado, preservando as mesmas regras.
 
 Tipos de equipe: ELETRICA, HIDRAULICA, REFRIGERACAO, TI_REDE, MOBILIARIO. Datas usam AAAA-MM-DD e são validadas como datas de calendário reais.
 

@@ -6,6 +6,7 @@ import { useAuthorization } from "../../hooks/useAuthorization";
 import { TicketForm } from "./components/TicketForm";
 import { ManagerBoard, TeamBoard, TicketList } from "./components/TicketBoard";
 import { TicketDetail } from "./components/TicketDetail";
+import { ManagerAnalytics } from "./components/ManagerAnalytics";
 import { PeriodicPanel, RequestsPanel } from "./components/PeriodicPanel";
 import { DataState, PageHeading, RefreshButton } from "./components/Common";
 import { useTickets } from "./useTickets";
@@ -52,7 +53,10 @@ export default function MaintenancePage({ profile }: { profile: Profile }) {
             profile === "gestor" ? "Painel de gestão" : "Fila de atendimento",
           ],
           ...(profile === "gestor"
-            ? [["retornos", "Retornos das equipes"]]
+            ? [
+                ["graficos", "Gráficos e indicadores"],
+                ["retornos", "Retornos das equipes"],
+              ]
             : [["historico", "Concluídos"]]),
           ["periodicas", "Manutenções periódicas"],
           ["solicitacoes", "Solicitações de periódicas"],
@@ -101,7 +105,12 @@ export default function MaintenancePage({ profile }: { profile: Profile }) {
       reload();
     }
   }
-  const ticketTab = !["novo", "periodicas", "solicitacoes"].includes(tab);
+  const ticketTab = ![
+    "novo",
+    "periodicas",
+    "solicitacoes",
+    "graficos",
+  ].includes(tab);
   return (
     <div className="gerinfra-app">
       <div className="brand-strip">
@@ -165,6 +174,21 @@ export default function MaintenancePage({ profile }: { profile: Profile }) {
         />
       )}
       {tab === "solicitacoes" && <RequestsPanel profile={profile} />}
+      {profile === "gestor" && tab === "graficos" && (
+        <DataState
+          loading={isLoading}
+          error={error}
+          empty={false}
+          reload={reload}
+        >
+          <ManagerAnalytics
+            tickets={tickets ?? []}
+            onOpen={(ticket) => setSelected(ticket.id)}
+            reload={reload}
+            refreshing={isLoading}
+          />
+        </DataState>
+      )}
       {ticketTab && (
         <>
           {profile === "gestor" && tab === "painel" && (

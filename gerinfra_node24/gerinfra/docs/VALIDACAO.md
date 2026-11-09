@@ -1,5 +1,29 @@
 # Validação realizada
 
+## Indicadores do gestor — 9 de novembro de 2026
+
+Alteração implementada a partir da branch `mvp_funcional` (`d13597f`).
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend: Prisma generate, Biome CI e build | Passaram |
+| Backend: testes unitários | 29 passaram |
+| Frontend: ESLint e build TypeScript/Vite | Passaram |
+| Frontend: testes unitários e componentes | 63 passaram |
+| PostgreSQL 14.2: migrations da instalação limpa | 3 aplicadas |
+| Integração HTTP com JWT/JWKS, RBAC e persistência | 10 testes passaram (9 cenários + principal) |
+| Chromium: gráficos em React com fixtures | 10 verificações passaram |
+| Layout em 390 px | Sem transbordamento da página |
+| Impressão | PDF A4 gerado, sem filtros editáveis ou navegação |
+
+As verificações novas cobrem separação entre retorno aberto e conclusão sem sucesso, resultados históricos não informados, denominador da taxa de sucesso, período inclusivo no horário de Recife, combinação/limpeza de filtros, período invertido, base vazia, callbacks e aba exclusiva do gestor. Os testes de componentes verificam também estados de carregamento/erro sem indicadores falsos e os payloads de conclusão de equipe/gestor com resultado, feedback e versão.
+
+A integração usou a API real com tokens assinados pelo fixture JWKS e PostgreSQL 14.2 em container temporário isolado, removido ao terminar. Foram persistidos e consultados `SUCESSO`, `SEM_SUCESSO`, feedback e `closedAt`. A migration mantém registros históricos sem resultado ou data de conclusão inferidos.
+
+A verificação visual nova usou o componente React real, CSS da aplicação e dados fictícios em um harness isolado, sem autenticação ou backend. O Keycloak real e a implantação institucional não foram exercitados. O build passou com os avisos já existentes de tamanho do bundle e comentários de dependências. A publicação no GitHub depende de conexão autenticada e não faz parte desta validação local.
+
+## Validação anterior do MVP
+
 Ambiente: Node.js 24.19.0, npm 11.9.0.
 
 | Verificação | Resultado |

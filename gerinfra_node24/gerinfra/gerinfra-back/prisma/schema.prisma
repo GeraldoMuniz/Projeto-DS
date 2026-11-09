@@ -61,6 +61,11 @@ enum TicketStatus {
   RETORNADO
 }
 
+enum TicketOutcome {
+  SUCESSO
+  SEM_SUCESSO
+}
+
 enum Urgency {
   URGENTE
   MODERADO
@@ -91,6 +96,8 @@ model Ticket {
   requesterId  String
   requesterName String         @db.VarChar(200)
   feedback     String?         @db.VarChar(5000)
+  outcome      TicketOutcome?
+  closedAt     DateTime?
   returnReason String?         @db.VarChar(5000)
   version      Int             @default(0)
   createdAt    DateTime        @default(now())

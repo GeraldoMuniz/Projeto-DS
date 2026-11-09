@@ -35,6 +35,11 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   RETORNADO: "Retornado à gestão",
   CONCLUIDO: "Concluído",
 };
+export type TicketOutcome = "SUCESSO" | "SEM_SUCESSO";
+export const OUTCOME_LABELS: Record<TicketOutcome, string> = {
+  SUCESSO: "Bem-sucedido",
+  SEM_SUCESSO: "Sem sucesso",
+};
 export type Profile = "solicitante" | "gestor" | "equipe";
 export interface Ticket {
   id: number;
@@ -46,6 +51,8 @@ export interface Ticket {
   description: string;
   team: Team | null;
   feedback: string | null;
+  outcome?: TicketOutcome | null;
+  closedAt?: string | null;
   returnReason: string | null;
   version: number;
   createdAt: string;
@@ -78,6 +85,7 @@ export interface TicketAction {
   team?: Team;
   status?: "EM_ANALISE" | "EM_ANDAMENTO";
   text?: string;
+  outcome?: TicketOutcome;
   urgency?: Urgency;
   audience?: "REQUESTER" | "TEAM";
 }

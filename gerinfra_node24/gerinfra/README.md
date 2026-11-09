@@ -80,6 +80,8 @@ Não execute os servidores Node locais nas mesmas portas enquanto os containers 
 
 - Solicitante: novo chamado com local, especialidade, urgência e descrição; lista própria; status, mensagens e feedback na linha do tempo.
 - Gestor: métricas e colunas de triagem/acompanhamento/histórico; alocação e reencaminhamento; retornos; mensagens ao solicitante e à equipe; fechamento administrativo após retorno.
+- Gestor: aba **Gráficos e indicadores**, com filtros por data de abertura, equipe e resultado, distribuição por situação/equipe, taxa de sucesso, retornos que precisam de apoio e relatório para impressão ou PDF.
+- Conclusões: equipe e gestor registram **bem-sucedido** ou **sem sucesso**, com feedback e data de encerramento. Conclusões antigas sem classificação aparecem como resultado não informado.
 - Equipe: fila por urgência com arrastar e soltar; alteração de prioridade por campo no detalhe; análise, andamento, conclusão com feedback e retorno justificado à gestão; mensagens ao solicitante; consulta de concluídos.
 - Periódicas: cadastro, edição, exclusão lógica, alocação de equipe e geração manual de chamado, como no botão de simulação do HTML.
 - Solicitações de periódicas: envio pela equipe, consulta por especialidade, aprovação com inclusão no cronograma e rejeição pelo gestor.
@@ -114,6 +116,24 @@ npm run preview
 Para usar a interface compilada, o servidor da API e o Keycloak devem continuar rodando. Os clients locais também aceitam `http://localhost:4173` para o preview.
 
 ## Organização e continuidade
+
+### Atualizar uma instalação existente
+
+A aba de indicadores usa os chamados persistidos e respeita o acesso exclusivo do gestor. Antes de iniciar a API atualizada, aplique a migration dos novos campos nullable de conclusão:
+
+```bash
+cd gerinfra-back
+npm ci
+npm run prisma:generate
+npm run migration:run
+npm run build
+```
+
+Atualize também o frontend com `npm ci` e `npm run build`. Integrações que enviam as ações `COMPLETE` ou `CLOSE` devem incluir `outcome` (`SUCESSO` ou `SEM_SUCESSO`) e `text` (feedback obrigatório).
+
+No perfil do gestor, abra **Gráficos e indicadores** e selecione o recorte desejado. **Imprimir / Salvar PDF** abre a impressão do navegador com os gráficos, filtros aplicados e tabela de chamados, sem a navegação do sistema. As datas do filtro usam o dia de abertura em Recife; os números mostram a situação atual desses chamados. Não representam as transições ocorridas no período. A taxa de sucesso considera apenas conclusões com resultado informado; retornos continuam abertos e indicam necessidade de intervenção da gestão.
+
+### Estrutura
 
 - `gerinfra-back/src/modules/tickets`: controllers, DTOs, regras de autorização/transição e serviço de chamados.
 - `gerinfra-back/src/modules/periodic`: periódicas e solicitações, com aprovação transacional.

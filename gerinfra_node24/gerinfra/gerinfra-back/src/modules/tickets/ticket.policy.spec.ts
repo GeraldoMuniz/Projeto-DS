@@ -3,6 +3,7 @@ import type { Ticket } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
 import { AccessRole } from '@/common/auth/access-role.enum';
 import type { CurrentUser } from '@/common/auth/current-user.interface';
+import { TicketActionDto } from './dto/ticket.dto';
 import { ticketChange, ticketScope } from './ticket.policy';
 
 const user: CurrentUser = { userId: 'requester', role: AccessRole.USER };
@@ -55,8 +56,11 @@ describe('Ciclo de vida do chamado', () => {
     );
     expect(() => ticketChange(ticket, { action: 'RETURN', version: 2 }, team)).toThrow('motivo');
     expect(
-      ticketChange(ticket, { action: 'COMPLETE', version: 2, text: 'Lâmpada substituída.' }, team)
-        .data.feedback,
+      ticketChange(
+        ticket,
+        { action: 'COMPLETE', version: 2, text: 'Lâmpada substituída.', outcome: 'SUCESSO' },
+        team,
+      ).data.feedback,
     ).toBe('Lâmpada substituída.');
   });
   it('mantém retorno sob decisão do gestor e permite realocação', () => {
@@ -67,9 +71,13 @@ describe('Ciclo de vida do chamado', () => {
     expect(
       ticketChange(returned, { action: 'ALLOCATE', version: 2, team: 'HIDRAULICA' }, admin).data,
     ).toMatchObject({ team: 'HIDRAULICA', status: 'ACOMPANHAMENTO', returnReason: null });
-    expect(ticketChange(returned, { action: 'CLOSE', version: 2 }, admin).data.status).toBe(
-      'CONCLUIDO',
-    );
+    expect(
+      ticketChange(
+        returned,
+        { action: 'CLOSE', version: 2, text: 'Compra não aprovada.', outcome: 'SEM_SUCESSO' },
+        admin,
+      ).data.status,
+    ).toBe('CONCLUIDO');
   });
   it('bloqueia alterações com versão antiga e em registros concluídos', () => {
     expect(() =>
@@ -91,5 +99,77 @@ describe('Ciclo de vida do chamado', () => {
       ticketChange(ticket, { action: 'MESSAGE', version: 2, text: 'Oi', audience: 'TEAM' }, admin)
         .audience,
     ).toBe('TEAM');
+  });
+  it.each([
+    'SUCESSO',
+    'SEM_SUCESSO',
+  ] as const)('registra resultado %s e data da conclusão da equipe', (outcome) => {
+    const before = Date.now();
+    const change = ticketChange(
+      ticket,
+      { action: 'COMPLETE', version: 2, text: 'Resultado documentado.', outcome },
+      team,
+    );
+    expect(change.data).toMatchObject({
+      status: 'CONCLUIDO',
+      outcome,
+      feedback: 'Resultado documentado.',
+      version: { increment: 1 },
+    });
+    expect(change.data.closedAt).toBeInstanceOf(Date);
+    expect((change.data.closedAt as Date).getTime()).toBeGreaterThanOrEqual(before);
+    expect(change.message).toContain(outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso');
+  });
+  it('exige resultado explícito tanto na conclusão da equipe quanto no fechamento administrativo', () => {
+    expect(() =>
+      ticketChange(ticket, { action: 'COMPLETE', version: 2, text: 'Feito.' }, team),
+    ).toThrow('resultado');
+    expect(() =>
+      ticketChange(
+        { ...ticket, status: 'RETORNADO' },
+        { action: 'CLOSE', version: 2, text: 'Encerrado.' },
+        admin,
+      ),
+    ).toThrow('resultado');
+  });
+  it('exige justificativa e persiste a classificação no fechamento administrativo', () => {
+    const returned = { ...ticket, status: 'RETORNADO' } as Ticket;
+    expect(() =>
+      ticketChange(returned, { action: 'CLOSE', version: 2, outcome: 'SEM_SUCESSO' }, admin),
+    ).toThrow('feedback');
+    const change = ticketChange(
+      returned,
+      { action: 'CLOSE', version: 2, text: 'Equipamento sem reparo.', outcome: 'SEM_SUCESSO' },
+      admin,
+    );
+    expect(change.data).toMatchObject({
+      status: 'CONCLUIDO',
+      outcome: 'SEM_SUCESSO',
+      feedback: 'Equipamento sem reparo.',
+    });
+    expect(change.data.closedAt).toBeInstanceOf(Date);
+    expect(() =>
+      ticketChange(
+        returned,
+        { action: 'CLOSE', version: 2, text: 'Sem reparo.', outcome: 'SEM_SUCESSO' },
+        team,
+      ),
+    ).toThrow(ForbiddenException);
+  });
+  it('mantém chamados retornados em aberto sem atribuir resultado ou data de conclusão', () => {
+    const change = ticketChange(
+      ticket,
+      { action: 'RETURN', version: 2, text: 'Aguardando peça.' },
+      team,
+    );
+    expect(change.data.status).toBe('RETORNADO');
+    expect(change.data).not.toHaveProperty('outcome');
+    expect(change.data).not.toHaveProperty('closedAt');
+  });
+  it('rejeita valores de resultado desconhecidos no contrato HTTP', () => {
+    expect(
+      TicketActionDto.schema.safeParse({ action: 'COMPLETE', version: 2, outcome: 'DESCONHECIDO' })
+        .success,
+    ).toBe(false);
   });
 });
