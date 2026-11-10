@@ -129,7 +129,7 @@ Não execute os servidores Node locais nas mesmas portas enquanto os containers 
 
 - Solicitante: novo chamado com local, especialidade, urgência e descrição; lista própria; status, mensagens e feedback na linha do tempo.
 - Gestor: métricas e colunas de triagem/acompanhamento/histórico; alocação e reencaminhamento; retornos; mensagens ao solicitante e à equipe; fechamento administrativo após retorno.
-- Gestor: aba **Gráficos e indicadores**, com filtros por data de abertura, equipe e resultado, distribuição por situação/equipe, taxa de sucesso, retornos que precisam de apoio e relatório para impressão ou PDF.
+- Gestor: aba **Gráficos e indicadores**, com filtros por data de abertura, equipe e resultado; gráficos de linhas e colunas com eixos X/Y; agrupamento por dia, semana ou mês; taxa de sucesso, retornos que precisam de apoio e relatório para impressão ou PDF.
 - Conclusões: equipe e gestor registram **bem-sucedido** ou **sem sucesso**, com feedback e data de encerramento. Conclusões antigas sem classificação aparecem como resultado não informado.
 - Equipe: fila por urgência com arrastar e soltar; alteração de prioridade por campo no detalhe; análise, andamento, conclusão com feedback e retorno justificado à gestão; mensagens ao solicitante; consulta de concluídos.
 - Periódicas: cadastro, edição, exclusão lógica, alocação de equipe e geração manual de chamado, como no botão de simulação do HTML.
@@ -184,7 +184,9 @@ npm run build
 
 Atualize também o frontend com `npm ci` e `npm run build`. Integrações que enviam as ações `COMPLETE` ou `CLOSE` devem incluir `outcome` (`SUCESSO` ou `SEM_SUCESSO`) e `text` (feedback obrigatório).
 
-No perfil do gestor, abra **Gráficos e indicadores** e selecione o recorte desejado. **Imprimir / Salvar PDF** abre a impressão do navegador com os gráficos, filtros aplicados e tabela de chamados, sem a navegação do sistema. As datas do filtro usam o dia de abertura em Recife; os números mostram a situação atual desses chamados. Não representam as transições ocorridas no período. A taxa de sucesso considera apenas conclusões com resultado informado; retornos continuam abertos e indicam necessidade de intervenção da gestão.
+No perfil do gestor, abra **Gráficos e indicadores** e selecione o recorte desejado. **Imprimir / Salvar PDF** abre a impressão do navegador com os gráficos, filtros aplicados e tabela de chamados, sem a navegação do sistema. As datas do filtro usam o dia de abertura em Recife. Os cartões e as distribuições mostram a situação atual desses chamados; as linhas usam as datas conhecidas de abertura e conclusão, com agrupamento por dia, semana ou mês. A taxa de sucesso considera apenas conclusões com resultado informado; retornos continuam abertos e indicam necessidade de intervenção da gestão. Consulte [Indicadores do gestor](docs/INDICADORES.md) para interpretar as séries.
+
+A adaptação visual dos gráficos não requer novas dependências ou migrations. Para uma instalação que já usa os campos de conclusão, basta atualizar e reiniciar o frontend ou gerar seu novo build.
 
 ### Estrutura
 

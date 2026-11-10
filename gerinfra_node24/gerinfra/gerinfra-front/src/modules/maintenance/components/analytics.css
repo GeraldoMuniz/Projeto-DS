@@ -49,38 +49,6 @@
 .report-description {
   margin: 6px 0 20px;
 }
-.report-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  list-style: none;
-  padding: 0;
-}
-.report-bar-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: baseline;
-  font-size: 12px;
-}
-.report-bar-label strong {
-  white-space: nowrap;
-}
-.report-bar-label small {
-  font-weight: 400;
-  color: #64748b;
-}
-.report-track {
-  height: 12px;
-  background: #edf1f5;
-  border-radius: 6px;
-  overflow: hidden;
-  margin-top: 7px;
-}
-.report-track > div {
-  height: 100%;
-  border-radius: 6px;
-}
 .report-explanation {
   margin-top: 24px;
   line-height: 1.7;
@@ -196,7 +164,8 @@
     -webkit-print-color-adjust: exact;
   }
   /* Hide siblings along the report's ancestor chain, including the app shell. */
-  body.gerinfra-report-visible > :not(:has(.manager-report)):not(.manager-report),
+  body.gerinfra-report-visible
+    > :not(:has(.manager-report)):not(.manager-report),
   body.gerinfra-report-visible
     *:has(.manager-report)
     > :not(:has(.manager-report)):not(.manager-report) {
@@ -229,7 +198,6 @@
   }
   .manager-report .stat-card,
   .manager-report .report-team-demand,
-  .manager-report .report-bars li,
   .manager-report .report-chart-grid .panel,
   .manager-report .report-support-list li {
     break-inside: avoid;

@@ -79,7 +79,11 @@ Exemplo de conclusão:
 
 A aba exclusiva do gestor agrega todos os chamados carregados pelo service paginado existente. Os filtros são próprios da aba: período de abertura inclusivo no fuso `America/Recife`, equipe e resultado. `RETORNADO` conta como aberto e aguardando apoio; não representa conclusão sem sucesso. A taxa de sucesso é `SUCESSO / (SUCESSO + SEM_SUCESSO)` entre chamados `CONCLUIDO`; resultados antigos ausentes ficam fora do denominador e aparecem separadamente. Sem resultados classificados, a taxa aparece como indisponível.
 
-Os gráficos usam barras HTML/CSS com contagens e percentuais textuais. O relatório impresso inclui o recorte e a data de emissão, gráficos, motivos de apoio e todos os chamados selecionados. Os dados mostram a situação atual dos chamados abertos no período escolhido, não um histórico de mudanças de status. Para volumes maiores, a agregação pode ser migrada para um endpoint dedicado, preservando as mesmas regras.
+Os gráficos usam SVG com eixos X/Y, grade, legendas e tabelas de valores exatos, sem biblioteca adicional. As colunas mostram a situação atual, resultados e demanda por equipe; as linhas mostram aberturas, conclusões por resultado e saldo pendente dos mesmos chamados filtrados. As séries agrupam os eventos reais de `createdAt` e `closedAt` em dias de Recife, semanas iniciadas na segunda-feira ou meses. O primeiro intervalo pode ser parcial. O dia atual usa apenas os eventos conhecidos até a consulta.
+
+Conclusões sem data válida de encerramento ficam fora das séries temporais, com aviso de quantidade; permanecem nos cartões e distribuições atuais. Não são estimadas datas por mensagens ou `updatedAt`. Conclusões com data e sem resultado são mostradas na série de resultado não informado. As linhas não reconstroem as etapas intermediárias de atendimento. Há um limite de 366 intervalos por gráfico; acima disso, o usuário pode ampliar o agrupamento ou reduzir o período, mantendo os cartões e as colunas disponíveis.
+
+O relatório impresso inclui o recorte, agrupamento, data de emissão, gráficos, motivos de apoio e todos os chamados selecionados. A agregação continua usando os dados carregados pelo service paginado existente; nenhuma alteração de backend ou banco é necessária. Para volumes maiores, ela pode ser migrada para um endpoint dedicado, preservando as mesmas regras.
 
 Tipos de equipe: ELETRICA, HIDRAULICA, REFRIGERACAO, TI_REDE, MOBILIARIO. Datas usam AAAA-MM-DD e são validadas como datas de calendário reais.
 

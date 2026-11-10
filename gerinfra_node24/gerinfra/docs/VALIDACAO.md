@@ -1,5 +1,17 @@
 # Validação realizada
 
+## Gráficos com eixos X e Y — 9 de novembro de 2026
+
+Adaptação da aba original do gestor a partir da apresentação de indicadores do ZIP de referência, preservando os filtros por abertura/equipe/resultado, os seis cartões, a distinção entre sucesso e falha e os retornos em aberto.
+
+- Frontend: 82 testes passaram, incluindo 11 casos das séries temporais, cinco dos gráficos SVG e nove da integração dos indicadores. Os componentes foram revalidados após o ajuste final dos rótulos.
+- ESLint e build TypeScript/Vite passaram. Permanecem os avisos anteriores de tamanho do bundle e comentários de dependências.
+- Chromium: 12 verificações passaram com os componentes React reais e os nove exemplos fictícios. Foram conferidos filtros, agrupamentos, valores, datas ausentes, dados vazios e um único ponto, além dos eixos, legendas e tabelas exatas.
+- Desktop e celular de 390 px sem transbordamento da página ou sobreposição de rótulos das categorias. Rótulos de datas na virada do ano permanecem dentro do SVG.
+- PDF A4 gerado com os cinco gráficos e os eixos, sem navegação, filtros editáveis ou conteúdo externo ao relatório.
+
+As verificações visuais usaram um harness isolado de frontend, sem autenticação ou backend. A alteração não modifica a API, os dados de exemplo ou o banco, e não exige nova migration. As séries usam apenas datas conhecidas de abertura e conclusão; os registros com datas insuficientes continuam nos indicadores atuais e são informados como excluídos das linhas.
+
 ## Novos exemplos de manutenção — 9 de novembro de 2026
 
 - Novo comando `npm run seed:novos`: nove chamados, cinco abertos e quatro concluídos (dois com sucesso e dois sem sucesso). Todos os seis estados e as cinco especialidades estão representados.
