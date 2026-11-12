@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException } from '@nes
 import type { Ticket } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
 import { AccessRole } from '../../src/common/auth/access-role.enum';
+import type { CurrentUser } from '../../src/common/auth/current-user.interface';
 import { TicketActionDto } from '../../src/modules/tickets/dto/ticket.dto';
 import { ticketChange, ticketScope } from '../../src/modules/tickets/ticket.policy';
 
@@ -14,7 +15,7 @@ const hidraulica = { userId: 'h1', role: AccessRole.TEAM, team: 'HIDRAULICA' as 
 const base = {
   id: 5, version: 2, requesterId: 'u1', team: 'ELETRICA', status: 'ACOMPANHAMENTO',
 } as Ticket;
-const acao = (ticket: Ticket, dto: Parameters<typeof ticketChange>[1], perfil = eletrica) =>
+const acao = (ticket: Ticket, dto: Parameters<typeof ticketChange>[1], perfil: CurrentUser = eletrica) =>
   ticketChange(ticket, dto, perfil);
 
 describe('US01 — controle de acesso', () => {
