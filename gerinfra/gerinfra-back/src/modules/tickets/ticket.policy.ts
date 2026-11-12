@@ -11,10 +11,7 @@ function requireFeedback(text: string | undefined, message: string): void {
 }
 
 // DT-02: unifica os efeitos de conclusão para equipe e gestor.
-function applyConclusion(
-  data: Prisma.TicketUpdateManyMutationInput,
-  dto: TicketActionDto,
-): void {
+function applyConclusion(data: Prisma.TicketUpdateManyMutationInput, dto: TicketActionDto): void {
   data.status = 'CONCLUIDO';
   data.feedback = dto.text;
   data.outcome = dto.outcome;
@@ -22,11 +19,7 @@ function applyConclusion(
 }
 
 // DT-03: explicita os estados elegíveis para atuação da equipe.
-const TEAM_ACTIVE_STATUSES: readonly string[] = [
-  'ACOMPANHAMENTO',
-  'EM_ANALISE',
-  'EM_ANDAMENTO',
-];
+const TEAM_ACTIVE_STATUSES: readonly string[] = ['ACOMPANHAMENTO', 'EM_ANALISE', 'EM_ANDAMENTO'];
 
 export function ticketScope(user: CurrentUser): Prisma.TicketWhereInput {
   if (!user.userId) throw new ForbiddenException('Identidade ausente.');
