@@ -5,6 +5,22 @@ import type { CurrentUser } from '@/common/auth/current-user.interface';
 import { TEAM_LABELS } from '@/common/domain/maintenance';
 import type { TicketActionDto } from './dto/ticket.dto';
 
+// DT-01: centraliza a validação de texto obrigatório sem alterar mensagens de erro.
+function requireFeedback(text: string | undefined, message: string): void {
+  if (!text?.trim()) throw new BadRequestException(message);
+}
+
+// DT-02: unifica os efeitos de conclusão para equipe e gestor.
+function applyConclusion(data: Prisma.TicketUpdateManyMutationInput, dto: TicketActionDto): void {
+  data.status = 'CONCLUIDO';
+  data.feedback = dto.text;
+  data.outcome = dto.outcome;
+  data.closedAt = new Date();
+}
+
+// DT-03: explicita os estados elegíveis para atuação da equipe.
+const TEAM_ACTIVE_STATUSES: readonly string[] = ['ACOMPANHAMENTO', 'EM_ANALISE', 'EM_ANDAMENTO'];
+
 export function ticketScope(user: CurrentUser): Prisma.TicketWhereInput {
   if (!user.userId) throw new ForbiddenException('Identidade ausente.');
   if (user.role === AccessRole.ADMIN) return {};
@@ -35,7 +51,7 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
     case 'COMPLETE':
     case 'RETURN':
       if (!operator) throw new ForbiddenException('Ação restrita à equipe responsável.');
-      if (!['ACOMPANHAMENTO', 'EM_ANALISE', 'EM_ANDAMENTO'].includes(ticket.status)) {
+      if (!TEAM_ACTIVE_STATUSES.includes(ticket.status)) {
         throw new ConflictException('Aguarde a decisão do gestor para continuar o atendimento.');
       }
       if (dto.action === 'PROGRESS') {
@@ -44,18 +60,15 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
         message =
           dto.status === 'EM_ANALISE' ? 'Atendimento em análise.' : 'Atendimento em andamento.';
       } else {
-        if (!dto.text?.trim())
-          throw new BadRequestException(
-            dto.action === 'COMPLETE'
-              ? 'Informe o feedback da solução.'
-              : 'Informe o motivo do retorno.',
-          );
+        requireFeedback(
+          dto.text,
+          dto.action === 'COMPLETE'
+            ? 'Informe o feedback da solução.'
+            : 'Informe o motivo do retorno.',
+        );
         if (dto.action === 'COMPLETE') {
           if (!dto.outcome) throw new BadRequestException('Informe o resultado da conclusão.');
-          data.status = 'CONCLUIDO';
-          data.feedback = dto.text;
-          data.outcome = dto.outcome;
-          data.closedAt = new Date();
+          applyConclusion(data, dto);
           message = `Chamado concluído ${dto.outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso'}: ${dto.text}`;
         } else {
           data.status = 'RETORNADO';
@@ -68,13 +81,9 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
       if (!admin) throw new ForbiddenException('Somente o gestor pode fechar administrativamente.');
       if (ticket.status !== 'RETORNADO')
         throw new ConflictException('Fechamento administrativo exige um chamado retornado.');
-      if (!dto.text?.trim())
-        throw new BadRequestException('Informe o feedback do fechamento administrativo.');
+      requireFeedback(dto.text, 'Informe o feedback do fechamento administrativo.');
       if (!dto.outcome) throw new BadRequestException('Informe o resultado da conclusão.');
-      data.status = 'CONCLUIDO';
-      data.feedback = dto.text;
-      data.outcome = dto.outcome;
-      data.closedAt = new Date();
+      applyConclusion(data, dto);
       message = `Chamado fechado administrativamente ${dto.outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso'}: ${dto.text}`;
       break;
     case 'MESSAGE':
