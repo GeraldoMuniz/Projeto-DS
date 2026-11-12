@@ -21,6 +21,13 @@ function applyConclusion(
   data.closedAt = new Date();
 }
 
+// DT-03: explicita os estados elegíveis para atuação da equipe.
+const TEAM_ACTIVE_STATUSES: readonly string[] = [
+  'ACOMPANHAMENTO',
+  'EM_ANALISE',
+  'EM_ANDAMENTO',
+];
+
 export function ticketScope(user: CurrentUser): Prisma.TicketWhereInput {
   if (!user.userId) throw new ForbiddenException('Identidade ausente.');
   if (user.role === AccessRole.ADMIN) return {};
@@ -51,7 +58,7 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
     case 'COMPLETE':
     case 'RETURN':
       if (!operator) throw new ForbiddenException('Ação restrita à equipe responsável.');
-      if (!['ACOMPANHAMENTO', 'EM_ANALISE', 'EM_ANDAMENTO'].includes(ticket.status)) {
+      if (!TEAM_ACTIVE_STATUSES.includes(ticket.status)) {
         throw new ConflictException('Aguarde a decisão do gestor para continuar o atendimento.');
       }
       if (dto.action === 'PROGRESS') {
