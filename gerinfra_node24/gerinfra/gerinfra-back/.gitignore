@@ -1,9 +1,0 @@
-node_modules
-dist
-coverage
-.env
-*.log
-.vscode
-tsconfig.tsbuildinfo
-tsconfig.build.tsbuildinfo
-.codegraph
