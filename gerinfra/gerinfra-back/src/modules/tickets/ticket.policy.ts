@@ -10,6 +10,17 @@ function requireFeedback(text: string | undefined, message: string): void {
   if (!text?.trim()) throw new BadRequestException(message);
 }
 
+// DT-02: unifica os efeitos de conclusão para equipe e gestor.
+function applyConclusion(
+  data: Prisma.TicketUpdateManyMutationInput,
+  dto: TicketActionDto,
+): void {
+  data.status = 'CONCLUIDO';
+  data.feedback = dto.text;
+  data.outcome = dto.outcome;
+  data.closedAt = new Date();
+}
+
 export function ticketScope(user: CurrentUser): Prisma.TicketWhereInput {
   if (!user.userId) throw new ForbiddenException('Identidade ausente.');
   if (user.role === AccessRole.ADMIN) return {};
@@ -57,10 +68,7 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
         );
         if (dto.action === 'COMPLETE') {
           if (!dto.outcome) throw new BadRequestException('Informe o resultado da conclusão.');
-          data.status = 'CONCLUIDO';
-          data.feedback = dto.text;
-          data.outcome = dto.outcome;
-          data.closedAt = new Date();
+          applyConclusion(data, dto);
           message = `Chamado concluído ${dto.outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso'}: ${dto.text}`;
         } else {
           data.status = 'RETORNADO';
@@ -75,10 +83,7 @@ export function ticketChange(ticket: Ticket, dto: TicketActionDto, user: Current
         throw new ConflictException('Fechamento administrativo exige um chamado retornado.');
       requireFeedback(dto.text, 'Informe o feedback do fechamento administrativo.');
       if (!dto.outcome) throw new BadRequestException('Informe o resultado da conclusão.');
-      data.status = 'CONCLUIDO';
-      data.feedback = dto.text;
-      data.outcome = dto.outcome;
-      data.closedAt = new Date();
+      applyConclusion(data, dto);
       message = `Chamado fechado administrativamente ${dto.outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso'}: ${dto.text}`;
       break;
     case 'MESSAGE':
