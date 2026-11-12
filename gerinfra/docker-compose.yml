@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:14.2
+    restart: unless-stopped
+    ports: ['5432:5432']
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gerinfra
+    volumes: ['gerinfra-db:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d gerinfra']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  keycloak-db:
+    image: postgres:14.4-alpine
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+      POSTGRES_DB: keycloak
+    volumes: ['keycloak-db:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keycloak']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.0
+    command: ['start-dev', '--http-relative-path=/auth', '--import-realm']
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HOSTNAME_STRICT: 'false'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+    volumes: ['./gerinfra-back/setup/realm.json:/opt/keycloak/data/import/realm.json:ro']
+    ports: ['8080:8080']
+    depends_on:
+      keycloak-db: { condition: service_healthy }
+  migrate:
+    profiles: ['full']
+    build: { context: ./gerinfra-back, target: build }
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/gerinfra
+    command: ['sh', '-c', 'npm run migration:run && node prisma/seed.mjs']
+    depends_on:
+      postgres: { condition: service_healthy }
+  backend:
+    profiles: ['full']
+    build: { context: ./gerinfra-back, target: production }
+    restart: unless-stopped
+    env_file: ./gerinfra-back/.env.example
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/gerinfra
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/auth/realms/Local/protocol/openid-connect/certs
+    ports: ['3000:3000']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      keycloak: { condition: service_started }
+  frontend:
+    profiles: ['full']
+    build: { context: ./gerinfra-front }
+    restart: unless-stopped
+    ports: ['5173:80']
+    depends_on: [backend]
+volumes:
+  gerinfra-db:
+  keycloak-db:
