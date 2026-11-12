@@ -1,0 +1,48 @@
+name: Sprint 3 - testes e cobertura
+
+on:
+  push:
+    branches:
+      - sprint3-testes-qualidade-2026
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gerinfra/gerinfra-back
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+      - name: Preparar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: gerinfra/gerinfra-back/package-lock.json
+      - name: Instalar dependências
+        run: npm ci
+      - name: Preparar Prisma
+        run: npm run prisma:generate
+      - name: Instalar provedor V8 para a medição
+        run: npm install --no-save --package-lock=false @vitest/coverage-v8@4.1.8
+      - name: Executar testes originais
+        run: npx vitest run src
+      - name: Medir v1
+        if: always()
+        env:
+          SPRINT3_COVERAGE: '1'
+        run: npx vitest run tests/v1-llm --coverage --coverage.reportsDirectory=../../docs/testes/relatorios/v1
+      - name: Medir v2
+        if: always()
+        env:
+          SPRINT3_COVERAGE: '1'
+        run: npx vitest run tests/v2 --coverage --coverage.reportsDirectory=../../docs/testes/relatorios/v2
+      - name: Publicar relatórios das duas suítes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint3-cobertura
+          path: docs/testes/relatorios
+          if-no-files-found: warn
