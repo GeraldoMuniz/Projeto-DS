@@ -100,26 +100,26 @@ describe('Ciclo de vida do chamado', () => {
         .audience,
     ).toBe('TEAM');
   });
-  it.each([
-    'SUCESSO',
-    'SEM_SUCESSO',
-  ] as const)('registra resultado %s e data da conclusão da equipe', (outcome) => {
-    const before = Date.now();
-    const change = ticketChange(
-      ticket,
-      { action: 'COMPLETE', version: 2, text: 'Resultado documentado.', outcome },
-      team,
-    );
-    expect(change.data).toMatchObject({
-      status: 'CONCLUIDO',
-      outcome,
-      feedback: 'Resultado documentado.',
-      version: { increment: 1 },
-    });
-    expect(change.data.closedAt).toBeInstanceOf(Date);
-    expect((change.data.closedAt as Date).getTime()).toBeGreaterThanOrEqual(before);
-    expect(change.message).toContain(outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso');
-  });
+  it.each(['SUCESSO', 'SEM_SUCESSO'] as const)(
+    'registra resultado %s e data da conclusão da equipe',
+    (outcome) => {
+      const before = Date.now();
+      const change = ticketChange(
+        ticket,
+        { action: 'COMPLETE', version: 2, text: 'Resultado documentado.', outcome },
+        team,
+      );
+      expect(change.data).toMatchObject({
+        status: 'CONCLUIDO',
+        outcome,
+        feedback: 'Resultado documentado.',
+        version: { increment: 1 },
+      });
+      expect(change.data.closedAt).toBeInstanceOf(Date);
+      expect((change.data.closedAt as Date).getTime()).toBeGreaterThanOrEqual(before);
+      expect(change.message).toContain(outcome === 'SUCESSO' ? 'com sucesso' : 'sem sucesso');
+    },
+  );
   it('exige resultado explícito tanto na conclusão da equipe quanto no fechamento administrativo', () => {
     expect(() =>
       ticketChange(ticket, { action: 'COMPLETE', version: 2, text: 'Feito.' }, team),
