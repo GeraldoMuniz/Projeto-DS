@@ -1,6 +1,6 @@
 # Sprint 3 — Log de interação com LLM
 
-**Modelo:** ChatGPT (OpenAI), GPT-6. **Data:** 12/11/2026. **Projeto:** Gerinfra (NestJS/TypeScript, Vitest). **Conta GitHub:** GeraldoMuniz.
+**Modelo:** ChatGPT (OpenAI), GPT-6. **Data:** 12/11/2026. **Projeto:** Gerinfra (NestJS/TypeScript, Vitest).
 
 ## Contexto consultado
 
@@ -26,16 +26,10 @@ A IA leu o repositório pelo conector GitHub, inclusive docs/ARQUITETURA.md, REA
 
 **Resposta:** gerinfra/gerinfra-back/tests/v2/ticket.policy.test.ts. A v2 foi aperfeiçoada por um commit posterior de correção de tipagem do helper de perfis.
 
-## Análise crítica e validação
+## Resultado da execução
 
-- A v1 não cobre todas as partições e limites identificados na matriz.
-- A v2 amplia os cenários negativos e valores de fronteira.
-- As asserções devem refletir o contrato especificado, e não reproduzir resultados errados do código.
-- Não declarar testes aprovados ou porcentagens de cobertura sem conferência dos registros do GitHub Actions.
-- As histórias US01–US06 são agrupamentos didáticos das funcionalidades documentadas; os identificadores originais da Sprint 2 não estavam disponíveis.
+A [execução no GitHub Actions](https://github.com/GeraldoMuniz/Projeto-DS/actions/runs/43233016036) validou as duas suítes. A [análise crítica](relatorio-analise-critica.md) reúne os indicadores e as lacunas identificadas na revisão dos testes.
 
 ## Pedido registrado
 
 > faça esse trabalho agora, lembre-se de comentar em portugues
-
-Roteiros: os dois documentos DOCX da Sprint 3 fornecidos pelo usuário.

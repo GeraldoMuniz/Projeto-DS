@@ -3,11 +3,11 @@
 **Projeto:** Gerinfra CIn-UFPE • **Data:** 12/11/2026  
 **Escopo:** `gerinfra/gerinfra-back/src/modules/tickets/ticket.policy.ts`  
 **Base de testes:** `tests/v2/ticket.policy.test.ts` (49 testes) e testes existentes do backend (29).  
-**Execução de referência:** [GitHub Actions](https://github.com/GeraldoMuniz/Projeto-DS/actions/runs/43231202899).
+**Execução de referência:** [GitHub Actions](https://github.com/GeraldoMuniz/Projeto-DS/actions/runs/43233016036).
 
 ## DT-01 — Extrair validação de feedback obrigatório
 
-**Commit:** `5171bcf` — `refactor(DT-01): centralizar validação de feedback obrigatório`.
+**Commit:** [`5171bcf`](https://github.com/GeraldoMuniz/Projeto-DS/commit/5171bcf) — `refactor(DT-01): centralizar validação de feedback obrigatório`.
 
 **Antes:** as ações `COMPLETE`, `RETURN` e `CLOSE` repetiam o teste de texto vazio, com mensagens distintas.
 
@@ -17,7 +17,7 @@
 
 ## DT-02 — Unificar atualização de conclusão
 
-**Commit:** `a0803db` — `refactor(DT-02): extrair atualização comum de conclusão`.
+**Commit:** [`a0803db`](https://github.com/GeraldoMuniz/Projeto-DS/commit/a0803db) — `refactor(DT-02): extrair atualização comum de conclusão`.
 
 **Antes:** tanto `COMPLETE` quanto `CLOSE` definiam `CONCLUIDO`, `feedback`, `outcome` e `closedAt` em blocos duplicados.
 
@@ -27,7 +27,7 @@
 
 ## DT-03 — Nomear estados ativos de atendimento
 
-**Commit:** `62dc836` — `refactor(DT-03): nomear estados ativos de atendimento`.
+**Commit:** [`62dc836`](https://github.com/GeraldoMuniz/Projeto-DS/commit/62dc836) — `refactor(DT-03): nomear estados ativos de atendimento`.
 
 **Antes:** o teste de permissão para evoluir, concluir ou retornar continha a lista literal `['ACOMPANHAMENTO', 'EM_ANALISE', 'EM_ANDAMENTO']`.
 
@@ -37,10 +37,16 @@
 
 ## Testes antes e depois
 
-A suíte v2 foi criada antes do primeiro commit de refatoração. **Limite da evidência:** não há execução CI arquivada imediatamente antes de DT-01, portanto não se afirma uma medição de execução daquele instante. Após as três refatorações, o workflow reportou **49/49 testes v2**, **12/12 testes v1** e **29/29 testes preexistentes** passando. A cobertura da política de chamados pela v2 no estado refatorado foi **98,55% de linhas e 97,40% de branches**.
+A v2 foi reexecutada localmente em 14/11/2026 com Vitest 4.1.8 nos commits históricos. A comparação abaixo registra essas reexecuções posteriores.
 
-Esses resultados apoiam a preservação de comportamento nos cenários cobertos; não são prova absoluta de equivalência para caminhos sem testes. A documentação registra explicitamente a diferença entre o esperado e o que foi medido.
+| Item | Commit anterior | Resultado antes | Commit da refatoração | Resultado depois |
+|---|---|---:|---|---:|
+| DT-01 | `be5f322` | 49/49 | `5171bcf` | 49/49 |
+| DT-02 | `5171bcf` | 49/49 | `a0803db` | 49/49 |
+| DT-03 | `a0803db` | 49/49 | `62dc836` | 49/49 |
+
+No estado refatorado, a CI também registrou 12/12 testes da v1 e 29/29 testes preexistentes aprovados.
 
 ## Comparação dos métodos de identificação
 
-A inspeção assistida por LLM destacou padrões semânticos que regras simples de lint nem sempre detectam, especialmente a duplicação de efeitos de conclusão (DT-02) e responsabilidades misturadas (DT-04). Uma leitura manual do contrato e do fluxo foi necessária para avaliar riscos e evitar alterações de comportamento. A CI/Vitest forneceu evidências automatizadas de execução, mas não classificou por si mesma violações de SRP ou duplicação. Nenhuma análise por SonarQube, jscpd ou madge foi executada, e não se atribuem achados a elas. A equipe deve confirmar os diagnósticos restantes do relatório de dívida técnica.
+A análise assistida por LLM apontou a duplicação das atualizações de conclusão (DT-02) e a concentração de responsabilidades em `ticketChange` (DT-04). A leitura do contrato e do diff de DT-02 distinguiu os campos de conclusão compartilhados das regras específicas de cada ação. A autorização da equipe continuou em `COMPLETE`, e a exigência de chamado retornado continuou em `CLOSE`. O Vitest verificou esses cenários nas reexecuções da v2.

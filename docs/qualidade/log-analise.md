@@ -12,13 +12,13 @@ Trechos integrais consultados: `src/modules/tickets/ticket.policy.ts`, `src/modu
 
 ## Resposta resumida e análise crítica
 
-Identificados oito candidatos, descritos em `divida-tecnica.md`. Três de baixo risco foram selecionados. A IA sugeriu SRP/duplicação principalmente em `ticketChange` e `PeriodicService`. **Ponto de cautela:** o tamanho isolado de um arquivo não prova uma violação de SOLID, e nem toda enumeração literal é necessariamente dívida técnica. Por isso, DT-03 e DT-05 precisam de avaliação humana.
+Foram registrados oito candidatos em [Dívida técnica](divida-tecnica.md). Três deram origem a refatorações. Em DT-03, o efeito observado é a explicitação do conjunto de estados aceitos. Em DT-05, a consequência observada é a distribuição das validações entre o DTO e a política de chamados.
 
 ## Ferramentas efetivamente utilizadas
 
 - Leitura do repositório por conector GitHub.
 - ChatGPT GPT-6 para localizar oportunidades, redigir testes e aplicar pequenas refatorações.
-- GitHub Actions + Vitest para testes e cobertura, configurados no workflow `.github/workflows/sprint3.yml` (consultar execução antes de atribuir resultados).
+- GitHub Actions e Vitest para testar as suítes e medir a cobertura. A [execução registrada](https://github.com/GeraldoMuniz/Projeto-DS/actions/runs/43233016036) também verificou lint e compilação do backend.
 - Não foram executados SonarQube, ESLint SonarJS, jscpd ou madge nesta análise; nenhum achado é atribuído a essas ferramentas.
 
 ## Itens descartados/não confirmados
@@ -26,7 +26,3 @@ Identificados oito candidatos, descritos em `divida-tecnica.md`. Três de baixo 
 - LSP: não há hierarquia de subtipos relevante que comprove violação.
 - DIP: `TicketService` recebe `PrismaService` por injeção, mas a dependência de uma classe concreta, sozinha, não comprova impacto material suficiente para registrar como dívida prioritária.
 - Information hiding: não foi identificado acesso externo direto a campos internos privados de uma classe nos módulos analisados.
-
-## Pendência metodológica
-
-A atividade exige que um integrante da equipe confirme cada achado no código. A IA não substitui essa revisão; os itens estão registrados para validação pelos alunos.

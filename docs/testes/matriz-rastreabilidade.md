@@ -3,7 +3,7 @@
 **Sistema:** Gerinfra CIn-UFPE — API NestJS/TypeScript.
 **Escopo:** `gerinfra/gerinfra-back/src/modules/tickets/ticket.policy.ts` e `gerinfra/gerinfra-back/src/modules/tickets/dto/ticket.dto.ts`.
 **Origem:** funcionalidades implementadas de chamados documentadas em `gerinfra/docs/ARQUITETURA.md`; os identificadores US01–US06 são uma organização desta atividade, não códigos originais comprovados da Sprint 2.
-**Elaboração manual:** 12/11/2026, antes da geração da suíte v1.
+**Primeira versão:** 12/11/2026, registrada antes da suíte v1.
 
 ## Histórias de usuário e critérios
 
@@ -35,7 +35,7 @@
 | US04-CA3 | Resultado obrigatório | ausente | CT18: COMPLETE sem outcome → BadRequestException | Não | Sim |
 | US04-CA4 | Data de conclusão | resultado válido | CT19: COMPLETE → closedAt do tipo Date | Não | Sim |
 | US05-CA1 | Retorno justificado | texto ausente / válido | CT20: RETURN sem texto → erro; CT21: RETURN com texto → RETORNADO | Parcial | Sim |
-| US05-CA2 | Fechamento administrativo | ADMIN + RETORNADO | CT22: CLOSE/SUCESSO com feedback → CONCLUIDO | Sim | Sim |
+| US05-CA2 | Fechamento administrativo | ADMIN + RETORNADO | CT22: CLOSE/SUCESSO com feedback → CONCLUIDO | Parcial | Parcial |
 | US05-CA3 | Estado prévio requerido | ACOMPANHAMENTO | CT23: CLOSE fora de RETORNADO → ConflictException | Não | Sim |
 | US05-CA4 | Gestor exclusivo | TEAM em RETORNADO | CT24: TEAM+CLOSE → ForbiddenException | Não | Sim |
 | US06-CA1 | Mensagem autorizada | gestor e equipe | CT25: ADMIN MESSAGE/TEAM; CT26: TEAM MESSAGE/REQUESTER | Parcial | Sim |
@@ -46,22 +46,15 @@
 
 ## Análise explícita dos limites
 
-- **Versão:** equivalência e vizinhança do inteiro esperado `2` (casos `1` e `2`); o DTO exige inteiro não negativo. Casos de entrada HTTP a verificar adicionalmente: `-1`, `0`, `1.5`.
-- **Tamanho de feedback/mensagem:** texto ausente (`undefined`), texto com espaços (`'   '`), texto presente (`'Ok'`). O DTO aplica `trim`, mínimo 1 e máximo 5000; conferir adicionalmente comprimentos 0, 1, 5000 e 5001 no validador.
+- **Versão:** a v2 testou as versões `1` e `2` na política do chamado. No DTO, confirmou a rejeição de `-1` e `1.5` e a aceitação de `0` e `2`.
+- **Tamanho de feedback/mensagem:** na política, a v2 testou feedback ausente, composto só por espaços e preenchido. No DTO, confirmou que textos com 1 e 5000 caracteres são aceitos e que textos com 0 e 5001 caracteres são rejeitados.
 - **Status do chamado:** pré-condições válidas `ACOMPANHAMENTO`, `EM_ANALISE`, `EM_ANDAMENTO` e inválidas `RETORNADO`, `CONCLUIDO` por ação.
 - **Resultado:** partições `SUCESSO`, `SEM_SUCESSO` e ausente; valor diferente dos permitidos deve ser barrado pelo DTO.
 - **Equipes:** uma especialidade válida, equipe ausente e equipe distinta da responsável.
 - **Urgência:** `URGENTE`, `MODERADO`, `LEVE` e ausente; fora do enum deve ser rejeitado no DTO.
 
-**Indicadores de inspeção após geração:** v1 atinge pelo menos um CT em 12 dos 25 critérios; v2 contém todos os 32 CT. A marca **Parcial** indica critério com vários CT e apenas parte deles na v1. Estas marcações documentam presença de cenário no teste; execução foi medida separadamente pela CI (12/12 e 49/49). 
+**Inspeção das suítes:** a v1 exercita pelo menos um cenário de 12 dos 25 critérios e a v2, dos 25. **Parcial** indica que a suíte verifica apenas parte dos cenários ou das condições esperadas para o critério. No CT22, as duas suítes verificam o fechamento com `SEM_SUCESSO`, enquanto a matriz especifica `SUCESSO`.
 
-**Total do projeto manual:** 25 critérios de aceitação e 32 identificadores CT previstos (com execuções múltiplas em alguns casos).
+**Casos de referência verificados integralmente:** 9 de 32 na v1 (CT01, CT02, CT03, CT06, CT10, CT14, CT21, CT25 e CT28) e 31 de 32 na v2 (exceto CT22). A v1 confirma a mensagem de erro no CT16, porém não o tipo da exceção, e aceita qualquer exceção no CT30. Ambos foram contados como parciais na v1.
 
-**Registro de método:** esta matriz foi preparada com leitura do contrato arquitetural e do código-fonte. A IA apoiou a redação da tabela; ela não foi apresentada como contexto à geração da suíte v1. As colunas v1/v2 foram conferidas pela leitura dos testes e os resultados da execução foram confirmados pela CI. Nenhuma medição é presumida.
-
-## Próximos passos na ordem de avaliação
-
-1. Preservar este commit anterior à v1.
-2. Gerar a v1 somente com histórias/critérios e código, sem fornecer esta matriz como prompt.
-3. Comparar testes existentes com os CTs, executar ferramentas e atualizar as colunas.
-4. Corrigir lacunas na v2 sem modificar o conteúdo da v1.
+**Método:** a matriz foi preparada a partir do contrato de arquitetura e do código-fonte, com apoio da IA na redação. Segundo o log da atividade, a geração da v1 usou os requisitos de arquitetura e o código. As colunas v1 e v2 registram a inspeção dos testes em relação aos critérios.
