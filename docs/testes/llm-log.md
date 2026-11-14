@@ -32,4 +32,4 @@ A [execução no GitHub Actions](https://github.com/GeraldoMuniz/Projeto-DS/acti
 
 ## Pedido registrado
 
-> faça esse trabalho agora, lembre-se de comentar em portugues
+>  Analise o projeto Gerinfra e crie os testes necessários para verificar as funcionalidades implementadas, seguindo os requisitos e as regras já definidas na documentação. Os testes devem ajudar a identificar possíveis falhas e garantir que o comportamento do sistema esteja de acordo com o esperado. Comente o código em português.
