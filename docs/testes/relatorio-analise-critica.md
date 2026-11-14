@@ -57,7 +57,7 @@ A CI mediu a cobertura de `ticket.policy.ts`. A conferência das asserções con
 
 ## 7. Conclusão
 
-A LLM pode gerar uma primeira suíte para regras com critérios de aceitação explícitos. No Gerinfra, a primeira versão executou todos os seus testes, mas verificou integralmente apenas quatro dos 25 critérios. Antes de usar uma suíte gerada como proteção para refatorar, a equipe pode preservar a versão original, conferir os resultados esperados contra o contrato e usar a matriz e a cobertura de branches para escolher os casos que faltam.
+A LLM pode ajudar a criar uma primeira versão dos testes a partir dos critérios de aceitação. No Gerinfra, conseguimos executar todos os testes gerados, mas percebemos que eles cobriam completamente apenas 4 dos 25 critérios. Por isso, antes de usar esses testes como garantia para fazer refatorações, precisamos comparar os resultados esperados com o que foi definido nos requisitos, guardar a versão original do código e analisar a matriz de cobertura e os branches para identificar o que ainda precisa ser testado.
 
 ## Apêndices
 
