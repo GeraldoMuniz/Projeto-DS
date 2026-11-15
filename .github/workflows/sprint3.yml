@@ -28,8 +28,6 @@ jobs:
         run: npm ci
       - name: Preparar Prisma
         run: npm run prisma:generate
-      - name: Instalar provedor V8 para a medição
-        run: npm install --no-save --package-lock=false @vitest/coverage-v8@4.1.8
       - name: Verificar formatação e lint do backend
         run: npm run lint:ci
       - name: Verificar compilação do backend
