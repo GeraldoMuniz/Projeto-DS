@@ -3,7 +3,7 @@
 **Sistema:** Gerinfra CIn-UFPE — API NestJS/TypeScript.
 **Escopo:** `gerinfra/gerinfra-back/src/modules/tickets/ticket.policy.ts` e `gerinfra/gerinfra-back/src/modules/tickets/dto/ticket.dto.ts`.
 **Origem:** funcionalidades implementadas de chamados documentadas em `gerinfra/docs/ARQUITETURA.md`; os identificadores US01–US06 são uma organização desta atividade, não códigos originais comprovados da Sprint 2.
-**Primeira versão:** 12/11/2026, registrada antes da suíte v1.
+**Primeira versão:** 12/11/2026, registrada antes da suíte v1. **Autoria metodológica:** matriz redigida com apoio do mesmo ChatGPT que gerou a v1, no mesmo contexto. A ordem dos commits não comprova independência entre o projeto manual e a geração por IA.
 
 ## Histórias de usuário e critérios
 
@@ -73,4 +73,4 @@ Uma partição é exercitada quando a suíte fornece uma entrada daquela classe 
 
 **Casos de referência verificados integralmente:** 9 de 32 na v1 (CT01, CT02, CT03, CT06, CT10, CT14, CT21, CT25 e CT28) e 32 de 32 na v2. A v1 confirma a mensagem de erro no CT16, porém não o tipo da exceção, e aceita qualquer exceção no CT30. Ambos foram contados como parciais na v1.
 
-**Método:** a matriz foi preparada a partir do contrato de arquitetura e do código-fonte, com apoio da IA na redação. Segundo o log da atividade, a geração da v1 usou os requisitos de arquitetura e o código. As colunas v1 e v2 registram a inspeção dos testes em relação aos critérios.
+**Método e limitação:** a matriz foi preparada a partir do contrato de arquitetura e do código-fonte, com apoio da IA na redação. A v1 foi gerada na mesma conversa pelo mesmo assistente, que já tinha acesso à matriz. Por isso, não se afirma que a IA desconhecia a matriz ou que o projeto da matriz foi elaborado de modo independente por humanos. As colunas v1 e v2 registram a inspeção dos testes em relação aos critérios; os indicadores de execução constam do relatório de análise crítica.
