@@ -12,11 +12,11 @@ As seis histórias pedagógicas US01–US06 agrupam os requisitos implementados 
 
 ## 2. Projeto manual
 
-A matriz foi registrada no commit `434dd48`, antes da v1 (`7193918`). A revisão explicita a contagem por história das 34 partições de equivalência. A inspeção considerou também dez entradas de referência para limites e validações: versões -1, 0, 1, 1.5 e 2, feedback só com espaços e textos com 0, 1, 5000 e 5001 caracteres.
+A matriz foi registrada no commit `434dd48`, antes da v1 (`7193918`). **Entretanto, a matriz e os testes foram produzidos com apoio do mesmo ChatGPT, na mesma conversa; a anterioridade do commit não comprova elaboração independente pela equipe nem desconhecimento da matriz pela IA.** A revisão explicita a contagem por história das 34 partições de equivalência. A inspeção considerou também dez entradas de referência para limites e validações: versões -1, 0, 1, 1.5 e 2, feedback só com espaços e textos com 0, 1, 5000 e 5001 caracteres.
 
 ## 3. Geração e execução
 
-A v1 foi gerada em uma rodada e preservada sem edição manual, com 12 testes. Outra rodada gerou a v2, que recebeu uma correção de tipagem. A revisão acrescentou o CT22 à v2, que passou a executar 50 casos, contando os testes parametrizados. O log registra reconstruções dos prompts operacionais.
+A v1 de 12 testes foi gerada diretamente no fluxo de execução do ChatGPT, sem um prompt de testes independente do pedido geral do usuário. Seu arquivo original foi preservado sem edição. Depois, o mesmo assistente criou a v2, que recebeu uma correção de tipagem; a equipe acrescentou o CT22, totalizando 50 casos, contando os parametrizados. **O log foi corrigido para distinguir mensagens literais do usuário, ações observadas e reconstituições descritivas, sem simular uma conversa.**
 
 ## 4. Indicadores medidos
 
@@ -54,7 +54,7 @@ A v2 ampliou os testes de permissões, transições inválidas e limites do DTO.
 
 ## 7. Conclusão
 
-A LLM pode ajudar a criar uma primeira versão dos testes a partir dos critérios de aceitação. No Gerinfra, conseguimos executar todos os testes gerados, mas percebemos que eles cobriam completamente apenas 4 dos 25 critérios. Por isso, antes de usar esses testes como garantia para fazer refatorações, precisamos comparar os resultados esperados com o que foi definido nos requisitos, guardar a versão original do código e analisar a matriz de cobertura e os branches para identificar o que ainda precisa ser testado.
+A LLM pode ajudar a criar uma primeira versão dos testes a partir dos critérios de aceitação. No Gerinfra, conseguimos executar todos os testes gerados, mas percebemos que eles cobriam completamente apenas 4 dos 25 critérios. **Essa comparação é limitada porque a mesma IA também auxiliou a produzir a matriz inicial, de modo que o experimento não comprova uma avaliação manual independente.** Por isso, antes de usar esses testes como garantia para fazer refatorações, precisamos comparar os resultados esperados com o que foi definido nos requisitos, guardar a versão original do código e analisar a matriz de cobertura e os branches para identificar o que ainda precisa ser testado.
 
 ## Apêndices
 
