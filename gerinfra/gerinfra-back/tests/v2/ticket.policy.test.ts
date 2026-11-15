@@ -113,11 +113,27 @@ describe('US05 — retorno e fechamento', () => {
     expect(retorno.data).not.toHaveProperty('closedAt');
     expect(retorno.data).not.toHaveProperty('outcome');
   });
-  it('CT22: gestor fecha retornado com feedback e resultado', () => {
+  it('gestor fecha chamado retornado sem sucesso', () => {
     const retornado = { ...base, status: 'RETORNADO' } as Ticket;
     expect(acao(retornado,
       { action: 'CLOSE', version: 2, text: 'Não concluído', outcome: 'SEM_SUCESSO' }, gestor).data)
       .toMatchObject({ status: 'CONCLUIDO', outcome: 'SEM_SUCESSO' });
+  });
+  it('CT22: gestor fecha chamado retornado com sucesso', () => {
+    const retornado = { ...base, status: 'RETORNADO' } as Ticket;
+    const feedback = 'Atendimento concluído';
+    const resultado = acao(
+      retornado,
+      { action: 'CLOSE', version: 2, text: feedback, outcome: 'SUCESSO' },
+      gestor,
+    );
+
+    expect(resultado.data).toMatchObject({
+      status: 'CONCLUIDO',
+      outcome: 'SUCESSO',
+      feedback,
+    });
+    expect(resultado.message).toBe(`Chamado fechado administrativamente com sucesso: ${feedback}`);
   });
   it('CT23: fechamento antes do retorno é inválido', () => {
     expect(() => acao(base,

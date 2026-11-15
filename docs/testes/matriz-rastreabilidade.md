@@ -35,7 +35,7 @@
 | US04-CA3 | Resultado obrigatório | ausente | CT18: COMPLETE sem outcome → BadRequestException | Não | Sim |
 | US04-CA4 | Data de conclusão | resultado válido | CT19: COMPLETE → closedAt do tipo Date | Não | Sim |
 | US05-CA1 | Retorno justificado | texto ausente / válido | CT20: RETURN sem texto → erro; CT21: RETURN com texto → RETORNADO | Parcial | Sim |
-| US05-CA2 | Fechamento administrativo | ADMIN + RETORNADO | CT22: CLOSE/SUCESSO com feedback → CONCLUIDO | Parcial | Parcial |
+| US05-CA2 | Fechamento administrativo | ADMIN + RETORNADO | CT22: CLOSE/SUCESSO com feedback → CONCLUIDO | Parcial | Sim |
 | US05-CA3 | Estado prévio requerido | ACOMPANHAMENTO | CT23: CLOSE fora de RETORNADO → ConflictException | Não | Sim |
 | US05-CA4 | Gestor exclusivo | TEAM em RETORNADO | CT24: TEAM+CLOSE → ForbiddenException | Não | Sim |
 | US06-CA1 | Mensagem autorizada | gestor e equipe | CT25: ADMIN MESSAGE/TEAM; CT26: TEAM MESSAGE/REQUESTER | Parcial | Sim |
@@ -43,6 +43,22 @@
 | US06-CA3 | Prioridade válida e obrigatória | com/sem urgency | CT28: PRIORITY URGENTE → altera; CT29: sem urgency → erro | Parcial | Sim |
 | US06-CA4 | Versão otimista | v=1 e v=2 | CT30: versão divergente → ConflictException; CT31: versão igual → incrementa | Parcial | Sim |
 | US06-CA5 | Chamado concluído | estado terminal | CT32: MESSAGE em CONCLUIDO → ConflictException | Não | Sim |
+
+## Cobertura de partições de equivalência
+
+A unidade de contagem é uma classe de entrada no contexto da regra testada. `COMPLETE` e `CLOSE`, por exemplo, são ações distintas. Os identificadores CT remetem aos cenários da matriz acima. O CT19 verifica a data de encerramento e reutiliza uma entrada válida de `COMPLETE`, já contada no CT14 ou no CT15. A contagem inclui também três classes explicitadas nesta revisão: fechamento com `SEM_SUCESSO`, resultado fora do enum e urgência fora do enum.
+
+| História | Partições consideradas | Exercitadas na v1 | Exercitadas na v2 |
+|---|---|---|---|
+| US01 | CT01–CT05 (5) | CT01–CT03 (3/5) | Todas (5/5) |
+| US02 | CT06–CT09 (4) | CT06 (1/4) | Todas (4/4) |
+| US03 | CT10–CT13 (4) | CT10 (1/4) | Todas (4/4) |
+| US04 | CT14–CT18 e resultado fora do enum no DTO (6) | CT14 e CT16 (2/6) | Todas (6/6) |
+| US05 | CT20–CT24 e fechamento com `SEM_SUCESSO` (6) | CT21 e fechamento com `SEM_SUCESSO` (2/6) | Todas (6/6) |
+| US06 | CT25–CT32 e urgência fora do enum no DTO (9) | CT25, CT28 e CT30 (3/9) | Todas (9/9) |
+| **Total** | **34 partições** | **12/34 (35,29%)** | **34/34 (100%)** |
+
+Uma partição é exercitada quando a suíte fornece uma entrada daquela classe e verifica um efeito associado. A coluna de casos de referência também exige todos os resultados esperados do caso. Por exemplo, o CT30 exercita a versão divergente na v1, mas a asserção aceita qualquer exceção.
 
 ## Análise explícita dos limites
 
@@ -53,8 +69,8 @@
 - **Equipes:** uma especialidade válida, equipe ausente e equipe distinta da responsável.
 - **Urgência:** `URGENTE`, `MODERADO`, `LEVE` e ausente; fora do enum deve ser rejeitado no DTO.
 
-**Inspeção das suítes:** a v1 exercita pelo menos um cenário de 12 dos 25 critérios e a v2, dos 25. **Parcial** indica que a suíte verifica apenas parte dos cenários ou das condições esperadas para o critério. No CT22, as duas suítes verificam o fechamento com `SEM_SUCESSO`, enquanto a matriz especifica `SUCESSO`.
+**Inspeção das suítes:** a v1 exercita pelo menos um cenário de 12 dos 25 critérios e a v2 verifica os 25 integralmente. **Parcial** indica que a suíte verifica apenas parte dos cenários ou das condições esperadas para o critério. A v1 verifica o fechamento com `SEM_SUCESSO`. A v2 mantém esse cenário e acrescenta o CT22 com `SUCESSO`.
 
-**Casos de referência verificados integralmente:** 9 de 32 na v1 (CT01, CT02, CT03, CT06, CT10, CT14, CT21, CT25 e CT28) e 31 de 32 na v2 (exceto CT22). A v1 confirma a mensagem de erro no CT16, porém não o tipo da exceção, e aceita qualquer exceção no CT30. Ambos foram contados como parciais na v1.
+**Casos de referência verificados integralmente:** 9 de 32 na v1 (CT01, CT02, CT03, CT06, CT10, CT14, CT21, CT25 e CT28) e 32 de 32 na v2. A v1 confirma a mensagem de erro no CT16, porém não o tipo da exceção, e aceita qualquer exceção no CT30. Ambos foram contados como parciais na v1.
 
 **Método:** a matriz foi preparada a partir do contrato de arquitetura e do código-fonte, com apoio da IA na redação. Segundo o log da atividade, a geração da v1 usou os requisitos de arquitetura e o código. As colunas v1 e v2 registram a inspeção dos testes em relação aos critérios.

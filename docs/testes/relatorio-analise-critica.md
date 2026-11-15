@@ -4,7 +4,7 @@
 **Stack:** NestJS 11, TypeScript, Vitest 4, V8 e GitHub Actions.  
 **LLM:** ChatGPT GPT-6.  
 **Escopo medido:** exclusivamente `gerinfra/gerinfra-back/src/modules/tickets/ticket.policy.ts`.  
-**Evidência:** [execução no GitHub Actions](https://github.com/GeraldoMuniz/Projeto-DS/actions/runs/43233016036), [cobertura v1](https://github.com/GeraldoMuniz/Projeto-DS/blob/sprint3-testes-qualidade-2026/docs/testes/relatorios/v1/index.html) e [cobertura v2](https://github.com/GeraldoMuniz/Projeto-DS/blob/sprint3-testes-qualidade-2026/docs/testes/relatorios/v2/index.html).
+**Evidência:** [execução inicial no GitHub Actions](https://github.com/GeraldoMuniz/Projeto-DS/actions/runs/43233016036), [cobertura v1](https://github.com/GeraldoMuniz/Projeto-DS/blob/sprint3-testes-qualidade-2026/docs/testes/relatorios/v1/index.html) e [cobertura v2](https://github.com/GeraldoMuniz/Projeto-DS/blob/sprint3-testes-qualidade-2026/docs/testes/relatorios/v2/index.html).
 
 ## 1. Contexto e seleção
 
@@ -12,48 +12,45 @@ As seis histórias pedagógicas US01–US06 agrupam os requisitos implementados 
 
 ## 2. Projeto manual
 
-A matriz foi registrada no commit `434dd48`, antes da v1 (`7193918`). Inclui classes válidas e inválidas de papel, equipe, estado, resultado, audiência e versão. A inspeção considerou dez entradas de referência para limites e validações de entrada: versões -1, 0, 1, 1.5 e 2, feedback só com espaços e textos com 0, 1, 5000 e 5001 caracteres.
+A matriz foi registrada no commit `434dd48`, antes da v1 (`7193918`). A revisão explicita a contagem por história das 34 partições de equivalência. A inspeção considerou também dez entradas de referência para limites e validações: versões -1, 0, 1, 1.5 e 2, feedback só com espaços e textos com 0, 1, 5000 e 5001 caracteres.
 
 ## 3. Geração e execução
 
-A v1 foi gerada em uma rodada e preservada sem edição manual, com 12 testes. Outra rodada gerou a v2, que recebeu uma correção de tipagem e executou 49 casos, contando as entradas de testes parametrizados. Nenhum teste precisou ser comentado para execução. O log registra reconstruções dos prompts operacionais.
+A v1 foi gerada em uma rodada e preservada sem edição manual, com 12 testes. Outra rodada gerou a v2, que recebeu uma correção de tipagem. A revisão acrescentou o CT22 à v2, que passou a executar 50 casos, contando os testes parametrizados. O log registra reconstruções dos prompts operacionais.
 
 ## 4. Indicadores medidos
 
 | Indicador | v1 — LLM | v2 — revista |
 |---|---:|---:|
-| Testes executados | 12 | 49 |
-| Testes passando | 12 | 49 |
+| Testes executados | 12 | 50 |
+| Testes passando | 12 | 50 |
 | Falhando | 0 | 0 |
 | Sem compilar | 0 | 0 |
 | Cobertura de linhas (V8) | 88,40% | 98,55% |
-| Cobertura de branches (V8) | 70,12% | 97,40% |
+| Cobertura de branches (V8) | 70,12% | 98,70% |
 | Critérios exercitados, inclusive parcialmente | 12/25 = 48% | 25/25 = 100% |
-| Critérios verificados integralmente | 4/25 = 16% | 24/25 = 96% |
-| Casos de referência verificados integralmente | 9/32 = 28,13% | 31/32 = 96,88% |
+| Critérios verificados integralmente | 4/25 = 16% | 25/25 = 100% |
+| Casos de referência verificados integralmente | 9/32 = 28,13% | 32/32 = 100% |
+| Partições de equivalência cobertas | 12/34 = 35,29% | 34/34 = 100% |
 | Entradas de referência para limites e validações | 2/10 = 20% | 10/10 = 100% |
 | Testes sem asserção ou triviais (inspeção) | 0 | 0 |
 | Defeitos reais demonstrados | 0 | 0 |
 
-A CI mediu a cobertura de `ticket.policy.ts`. A conferência das asserções contra a matriz produziu os indicadores funcionais, incluindo os casos do DTO. Os testes com banco ficaram fora dessa medição.
+As duas suítes foram medidas localmente em 15/11/2026 com Vitest 4.1.8 e V8, no mesmo escopo de `ticket.policy.ts`. A inspeção dos testes contra a matriz produziu os indicadores funcionais, incluindo os casos do DTO. Os testes com banco ficaram fora dessa medição.
 
 ## 5. Análise crítica
 
 **Partições e limites.** A v1 cobriu os três perfis de consulta e exercitou casos inválidos de feedback ausente e versão divergente. Para progresso, exercitou apenas `EM_ANALISE`. Para `COMPLETE`, exercitou apenas `SUCESSO` como resultado válido. A v2 incluiu `EM_ANDAMENTO`, `COMPLETE` com `SEM_SUCESSO`, equipe indevida, estado terminal e as fronteiras de tamanho do texto no DTO.
 
-**Critérios de aceitação.** A v2 exercitou todos os 25 critérios, 24 integralmente. O fechamento administrativo de chamado retornado foi verificado nas duas suítes com `SEM_SUCESSO`. O CT22 especifica `SUCESSO`, que ficou sem verificação nesse cenário. Os testes adicionais do DTO se relacionam às validações de versões, resultados e urgências previstas nas histórias selecionadas.
+**Critérios de aceitação.** A v2 verifica integralmente os 25 critérios. A v1 verifica o fechamento administrativo de chamado retornado com `SEM_SUCESSO`. Na v2, o CT22 acrescenta o caso com `SUCESSO` e verifica o estado final, o resultado, o feedback e a mensagem de fechamento. Os testes adicionais do DTO se relacionam às validações de versões, resultados e urgências previstas nas histórias selecionadas.
 
-**Linhas versus branches.** Na v1, `COMPLETE` com `SUCESSO` executa a condição `if (!dto.outcome)` sem percorrer o ramo que lança a exceção. A v2 exercitou esse ramo no CT18 e incluiu `COMPLETE` com `SEM_SUCESSO`. No módulo medido, a cobertura de branches aumentou 27,28 pontos percentuais.
+**Linhas versus branches.** Na v1, `COMPLETE` com `SUCESSO` executa a condição `if (!dto.outcome)` sem percorrer o ramo que lança a exceção. A v2 exercita esse ramo no CT18. No `CLOSE`, o CT22 exerce o ramo que produz a mensagem de fechamento com sucesso. Isso elevou a cobertura da v2 de 75 para 76 dos 77 branches, mantendo 68 das 69 linhas cobertas. Em relação à v1, o ganho foi de 28,58 pontos percentuais em branches.
 
 **Oráculos e asserções.** Todos os testes inspecionados contêm asserções. No CT30, a v1 aceita qualquer erro com `toThrow()`. A v2 exige `ConflictException`, que distingue o conflito de versão de outros erros da ação. A inspeção não identificou teste que aprovasse um defeito real.
 
 ## 6. Melhorias da v2
 
-- Testes de escopo e permissões por perfil, inclusive identidade ou equipe ausentes.
-- Casos negativos de autorização e transições inválidas para chamados retornados ou concluídos.
-- Resultado explícito e feedback obrigatório, inclusive espaços em branco.
-- Limites numéricos de versão e fronteiras de comprimento do texto, exercitando o validador.
-- Asserções sobre `closedAt`, incremento de versão e ausência de campos de conclusão em retorno.
+A v2 ampliou os testes de permissões, transições inválidas e limites do DTO. As asserções passaram a verificar o resultado, o feedback e a data de conclusão, o incremento de versão e a ausência de campos de conclusão no retorno. O CT22 acrescentou o fechamento administrativo com `SUCESSO` ao caso com `SEM_SUCESSO` já existente.
 
 ## 7. Conclusão
 
