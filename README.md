@@ -168,6 +168,38 @@ npm run preview
 
 Para usar a interface compilada, o servidor da API e o Keycloak devem continuar rodando. Os clients locais também aceitam `http://localhost:4173` para o preview.
 
+### Testes unitários e cobertura da Sprint 3
+
+| Suíte | Localização |
+| --- | --- |
+| Testes preexistentes do backend | Arquivos `*.spec.ts` em [`gerinfra/gerinfra-back/src/`](gerinfra/gerinfra-back/src/) |
+| v1, gerada pela LLM | [`gerinfra/gerinfra-back/tests/v1-llm/`](gerinfra/gerinfra-back/tests/v1-llm/) |
+| v2, revisada | [`gerinfra/gerinfra-back/tests/v2/`](gerinfra/gerinfra-back/tests/v2/) |
+
+Com Node.js 24, execute os comandos a partir da raiz do repositório.
+
+```bash
+cd gerinfra/gerinfra-back
+npm ci
+npm run prisma:generate
+npm test
+npm test -- tests/v1-llm
+npm test -- tests/v2
+```
+
+`npm test` roda as três suítes unitárias do backend. O caminho após `--` seleciona uma suíte. Para essas suítes, basta gerar o cliente do Prisma. Elas rodam sem PostgreSQL ou Keycloak.
+
+Para reproduzir a cobertura da Sprint 3 com o mesmo escopo da CI, execute estes comandos dentro de `gerinfra/gerinfra-back`.
+
+```bash
+npm run test:cov -- tests/v1-llm --coverage.include=src/modules/tickets/ticket.policy.ts --coverage.reportsDirectory=coverage/sprint3/v1
+npm run test:cov -- tests/v2 --coverage.include=src/modules/tickets/ticket.policy.ts --coverage.reportsDirectory=coverage/sprint3/v2
+```
+
+O terminal mostra os percentuais de linhas e branches de `ticket.policy.ts`. Abra `coverage/sprint3/v1/index.html` ou `coverage/sprint3/v2/index.html` para inspecionar os trechos cobertos. Para medir os testes unitários no escopo padrão do backend, rode `npm run test:cov -- --coverage.reportsDirectory=coverage/geral` e abra `coverage/geral/index.html`.
+
+Os relatórios versionados, a matriz e a análise crítica estão em [`docs/testes/`](docs/testes/).
+
 ## Organização e continuidade
 
 ### Atualizar uma instalação existente
@@ -184,7 +216,7 @@ npm run build
 
 Atualize também o frontend com `npm ci` e `npm run build`. Integrações que enviam as ações `COMPLETE` ou `CLOSE` devem incluir `outcome` (`SUCESSO` ou `SEM_SUCESSO`) e `text` (feedback obrigatório).
 
-No perfil do gestor, abra **Gráficos e indicadores** e selecione o recorte desejado. **Imprimir / Salvar PDF** abre a impressão do navegador com os gráficos, filtros aplicados e tabela de chamados, sem a navegação do sistema. As datas do filtro usam o dia de abertura em Recife. Os cartões e as distribuições mostram a situação atual desses chamados; as linhas usam as datas conhecidas de abertura e conclusão, com agrupamento por dia, semana ou mês. A taxa de sucesso considera apenas conclusões com resultado informado; retornos continuam abertos e indicam necessidade de intervenção da gestão. Consulte [Indicadores do gestor](docs/INDICADORES.md) para interpretar as séries.
+No perfil do gestor, abra **Gráficos e indicadores** e selecione o recorte desejado. **Imprimir / Salvar PDF** abre a impressão do navegador com os gráficos, filtros aplicados e tabela de chamados, sem a navegação do sistema. As datas do filtro usam o dia de abertura em Recife. Os cartões e as distribuições mostram a situação atual desses chamados; as linhas usam as datas conhecidas de abertura e conclusão, com agrupamento por dia, semana ou mês. A taxa de sucesso considera apenas conclusões com resultado informado; retornos continuam abertos e indicam necessidade de intervenção da gestão. Consulte [Indicadores do gestor](gerinfra/docs/INDICADORES.md) para interpretar as séries.
 
 A adaptação visual dos gráficos não requer novas dependências ou migrations. Para uma instalação que já usa os campos de conclusão, basta atualizar e reiniciar o frontend ou gerar seu novo build.
 
@@ -197,16 +229,23 @@ A adaptação visual dos gráficos não requer novas dependências ou migrations
 - `gerinfra-front/src/modules/maintenance`: tipos, services e hooks por entidade; formulários, quadros e detalhes em componentes React.
 - `gerinfra-front/src/routes.tsx`: rotas protegidas e ciclo de vida dos tokens do boilerplate.
 - `gerinfra-front/src/services/api.ts`: cliente HTTP oficial, refresh e extração de erros.
-- `docs/ARQUITETURA.md`: regras e contratos de domínio.
-- `docs/VALIDACAO.md`: verificações realizadas e limites do ambiente de teste.
+- [`gerinfra/docs/ARQUITETURA.md`](gerinfra/docs/ARQUITETURA.md) descreve as regras e os contratos de domínio.
+- [`gerinfra/docs/VALIDACAO.md`](gerinfra/docs/VALIDACAO.md) registra as verificações e os limites do ambiente de teste.
 
 Os exemplos `task`, `todos` e `team` originais foram conservados como referência de desenvolvimento, mas não estão registrados nas rotas/API do Gerinfra. O ZIP não inclui `node_modules`, builds, arquivos `.git`, o gerador de novos projetos nem o site de documentação do boilerplate.
+
+### Política de chamados
+
+As regras ficam em [`ticket.policy.ts`](gerinfra/gerinfra-back/src/modules/tickets/ticket.policy.ts). O [`TicketService`](gerinfra/gerinfra-back/src/modules/tickets/ticket.service.ts) usa essas funções ao consultar e alterar chamados.
+
+- **`ticketScope(user)`** devolve o filtro Prisma dos chamados que o usuário pode acessar. O gestor vê todos os chamados, a equipe vê os da sua especialidade e o solicitante vê os que abriu. A política rejeita usuários sem identidade e perfis de equipe sem especialidade configurada.
+- **`ticketChange(ticket, dto, user)`** valida a versão do chamado, as permissões do perfil e as regras da ação. Por exemplo, o gestor só pode fazer o fechamento administrativo de um chamado retornado. A função devolve `{ data, message, audience }` com os campos a alterar, o texto e o público da mensagem. O serviço aplica a atualização e grava a mensagem na mesma transação.
 
 ## Configuração institucional
 
 A equipe de TI deverá configurar a URL e o realm reais do Keycloak, os clients, os papéis e o PostgreSQL nos `.env`. O client do frontend precisa ser público, com fluxo Authorization Code/PKCE, redirects e web origins autorizados; o token deve incluir a audiência `gerinfra-back`.
 
-As equipes vêm de papéis assinados no token, não de um campo enviado pelo navegador. O gestor tem precedência sobre equipe e solicitante; a equipe tem precedência sobre solicitante. Os nomes dos papéis estão em `docs/ARQUITETURA.md`.
+As equipes vêm de papéis assinados no token, não de um campo enviado pelo navegador. O gestor tem precedência sobre equipe e solicitante; a equipe tem precedência sobre solicitante. Os nomes dos papéis estão no [documento de arquitetura](gerinfra/docs/ARQUITETURA.md).
 
 Em containers, `KEYCLOAK_AUTH_SERVER_URL` continua sendo a URL pública usada como issuer. `KEYCLOAK_JWKS_URL` permite buscar as chaves por um endereço interno, mantendo a validação do issuer público.
 

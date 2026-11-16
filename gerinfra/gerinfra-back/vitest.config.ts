@@ -5,12 +5,15 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.spec.ts', 'src/**/*.test.ts'],
+    include: ['src/**/*.spec.ts', 'src/**/*.test.ts', 'tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist'],
     coverage: {
       provider: 'v8',
+      reportOnFailure: true,
       reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.ts'],
+      include: process.env.SPRINT3_COVERAGE === '1'
+        ? ['src/modules/tickets/ticket.policy.ts']
+        : ['src/**/*.ts'],
       exclude: [
         'src/**/*.module.ts',
         'src/**/*.dto.ts',
