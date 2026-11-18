@@ -53,4 +53,86 @@ describe("Abertura de chamado", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("até 5 MB");
   });
 
+  it("abre e fecha a câmera liberando o dispositivo", async () => {
+    const parar = vi.fn();
+    const obterCamera = vi.fn().mockResolvedValue({
+      getTracks: () => [{ stop: parar }],
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: obterCamera },
+    });
+    const { unmount } = render(<TicketForm onSubmit={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Abrir câmera para tirar foto" }));
+    expect(await screen.findByLabelText("Visualização ao vivo da câmera")).toBeInTheDocument();
+    expect(obterCamera).toHaveBeenCalledWith({
+      audio: false,
+      video: { facingMode: { ideal: "environment" } },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar câmera" }));
+    expect(parar).toHaveBeenCalledOnce();
+    unmount();
+    vi.restoreAllMocks();
+  });
+
+  it("captura a fotografia da câmera e envia no mesmo campo de imagem", async () => {
+    const parar = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: parar }] }) },
+    });
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn(() => "blob:foto-do-chamado"),
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    const desenhar = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      drawImage: desenhar,
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((callback) => {
+      callback(new Blob(["foto"], { type: "image/jpeg" }));
+    });
+    const enviar = vi.fn().mockResolvedValue(undefined);
+    render(<TicketForm onSubmit={enviar} />);
+    fireEvent.click(screen.getByRole("button", { name: "Abrir câmera para tirar foto" }));
+    const video = await screen.findByLabelText("Visualização ao vivo da câmera");
+    Object.defineProperty(video, "videoWidth", { configurable: true, value: 1280 });
+    Object.defineProperty(video, "videoHeight", { configurable: true, value: 720 });
+    fireEvent.click(screen.getByRole("button", { name: "Tirar foto" }));
+    expect(await screen.findByRole("img", { name: "Pré-visualização da imagem anexada" }))
+      .toHaveAttribute("src", "blob:foto-do-chamado");
+    expect(parar).toHaveBeenCalledOnce();
+    expect(desenhar).toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Local da ocorrência"), {
+      target: { value: "Sala 201" },
+    });
+    fireEvent.change(screen.getByLabelText("Descrição do problema"), {
+      target: { value: "Foto do vazamento" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar chamado" }));
+    await waitFor(() => expect(enviar).toHaveBeenCalledOnce());
+    const anexo = enviar.mock.calls[0][0].imagem as File;
+    expect(anexo).toBeInstanceOf(File);
+    expect(anexo.type).toBe("image/jpeg");
+    expect(anexo.name).toMatch(/^chamado-.*\.jpg$/);
+    vi.restoreAllMocks();
+  });
+
+  it("mostra erro de permissão sem impedir o cadastro sem foto", async () => {
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockRejectedValue(
+        Object.assign(new Error("Sem permissão"), { name: "NotAllowedError" }),
+      ) },
+    });
+    render(<TicketForm onSubmit={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Abrir câmera para tirar foto" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Permissão para usar a câmera negada");
+    expect(screen.getByRole("button", { name: "Enviar chamado" })).toBeEnabled();
+  });
+
 });
