@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +11,9 @@ import {
   URGENCY_LABELS,
   type CreateTicket,
 } from "../maintenance.types";
+const LIMITE_IMAGEM = 5 * 1024 * 1024;
+const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
 const schema = z.object({
   location: z.string().trim().min(1, "Informe o local.").max(200),
   type: z.enum(TEAMS),
@@ -19,8 +23,11 @@ const schema = z.object({
 export function TicketForm({
   onSubmit,
 }: {
-  onSubmit: (data: CreateTicket) => Promise<void>;
+  onSubmit: (data: CreateTicket & { imagem?: File }) => Promise<void>;
 }) {
+  const inputImagem = useRef<HTMLInputElement>(null);
+  const [imagem, setImagem] = useState<File | null>(null);
+  const [erroImagem, setErroImagem] = useState("");
   const {
     register,
     handleSubmit,
@@ -34,6 +41,22 @@ export function TicketForm({
       description: "",
     },
   });
+  function selecionarImagem(arquivo: File | null) {
+    if (!arquivo) {
+      setImagem(null);
+      setErroImagem("");
+    } else if (!TIPOS_IMAGEM.includes(arquivo.type)) {
+      setImagem(null);
+      setErroImagem("Selecione uma imagem JPG, PNG, WebP ou GIF.");
+    } else if (arquivo.size === 0 || arquivo.size > LIMITE_IMAGEM) {
+      setImagem(null);
+      setErroImagem("A imagem precisa ter até 5 MB e não pode estar vazia.");
+    } else {
+      setImagem(arquivo);
+      setErroImagem("");
+    }
+  }
+
   return (
     <Frame className="ticket-form panel">
       <Text as="h2" variant="headline">
@@ -43,7 +66,10 @@ export function TicketForm({
         Conte o que aconteceu. A Gerinfra vai encaminhar para a equipe
         responsável.
       </p>
-      <form onSubmit={handleSubmit(onSubmit)} className="stack">
+      <form
+        onSubmit={handleSubmit((dados) => onSubmit(imagem ? { ...dados, imagem } : dados))}
+        className="stack"
+      >
         <label>
           Local da ocorrência
           <input
@@ -88,7 +114,35 @@ export function TicketForm({
             <span className="field-error">{errors.description.message}</span>
           )}
         </label>
-        <button className="button primary" disabled={isSubmitting}>
+        <div className="stack">
+          <label htmlFor="imagem-chamado">Imagem do problema (opcional)</label>
+          <input
+            id="imagem-chamado"
+            ref={inputImagem}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            aria-describedby="ajuda-imagem"
+            onChange={(event) => selecionarImagem(event.target.files?.[0] ?? null)}
+          />
+          <p className="muted" id="ajuda-imagem">JPG, PNG, WebP ou GIF. Até 5 MB.</p>
+          {imagem && (
+            <div>
+              <span>Imagem selecionada: {imagem.name}</span>{" "}
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => {
+                  selecionarImagem(null);
+                  if (inputImagem.current) inputImagem.current.value = "";
+                }}
+              >
+                Remover imagem
+              </button>
+            </div>
+          )}
+          {erroImagem && <span role="alert" className="field-error">{erroImagem}</span>}
+        </div>
+        <button className="button primary" disabled={isSubmitting || Boolean(erroImagem)}>
           <Send size={16} />
           {isSubmitting ? "Enviando…" : "Enviar chamado"}
         </button>

@@ -6,6 +6,7 @@ import { type ListQueryDto, pageResult, TEAM_LABELS } from '@/common/domain/main
 import { PrismaService } from '@/database/prisma.service';
 import type { CreateTicketDto, TicketActionDto } from './dto/ticket.dto';
 import { ticketChange, ticketScope } from './ticket.policy';
+import { validateTicketImage, type TicketImageUpload } from './ticket-image';
 
 @Injectable()
 export class TicketService {
@@ -30,17 +31,22 @@ export class TicketService {
       user.role === AccessRole.USER ? { audience: { in: ['ALL', 'REQUESTER'] } } : {};
     const ticket = await this.prisma.ticket.findFirst({
       where: { id, ...ticketScope(user) },
-      include: { messages: { where: audience, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } },
+      include: {
+        image: { select: { mimeType: true, size: true } },
+        messages: { where: audience, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+      },
     });
     if (!ticket) throw new NotFoundException('Chamado não encontrado.');
     return ticket;
   }
 
-  async create(dto: CreateTicketDto, user: CurrentUser) {
+  async create(dto: CreateTicketDto, user: CurrentUser, imagem?: TicketImageUpload) {
     ticketScope(user);
+    const anexo = validateTicketImage(imagem);
     return this.prisma.ticket.create({
       data: {
         ...dto,
+        ...(anexo ? { image: { create: anexo } } : {}),
         title: `${TEAM_LABELS[dto.type]} em ${dto.location}`.slice(0, 200),
         requesterId: user.userId as string,
         requesterName: (user.displayName ?? 'Solicitante').slice(0, 200),
@@ -53,6 +59,15 @@ export class TicketService {
         },
       },
     });
+  }
+
+  async image(id: number, user: CurrentUser) {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { id, ...ticketScope(user) },
+      select: { image: { select: { mimeType: true, data: true } } },
+    });
+    if (!ticket?.image) throw new NotFoundException('Imagem não encontrada.');
+    return { mimeType: ticket.image.mimeType, data: Buffer.from(ticket.image.data) };
   }
 
   async action(id: number, dto: TicketActionDto, user: CurrentUser) {

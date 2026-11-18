@@ -1,6 +1,6 @@
 import { formatTime } from "../format";
 import { Dialog } from "@base-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, toast } from "@cincoders/cinnamon";
 import { X, MapPin } from "lucide-react";
 import { Can } from "../../../components/auth/Can";
@@ -39,6 +39,29 @@ export function TicketDetail({
   const [feedback, setFeedback] = useState("");
   const [outcome, setOutcome] = useState<TicketOutcome | "">("");
   const [reason, setReason] = useState("");
+  const [urlImagem, setUrlImagem] = useState<string | null>(null);
+  const [erroImagem, setErroImagem] = useState<string | null>(null);
+  const possuiImagem = Boolean(ticket?.image);
+  useEffect(() => {
+    if (!possuiImagem) return;
+    const controller = new AbortController();
+    let ativo = true;
+    let url: string | null = null;
+    void ticketService.image(id, controller.signal)
+      .then((blob) => {
+        if (!ativo) return;
+        url = URL.createObjectURL(blob);
+        setUrlImagem(url);
+      })
+      .catch((error: unknown) => {
+        if (ativo) setErroImagem(error instanceof Error ? error.message : "Falha ao carregar a imagem.");
+      });
+    return () => {
+      ativo = false;
+      controller.abort();
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [id, possuiImagem]);
   const closed = ticket?.status === "CONCLUIDO";
   const returned = ticket?.status === "RETORNADO";
   async function act(dto: Omit<TicketAction, "version">) {
@@ -108,6 +131,24 @@ export function TicketDetail({
                   </span>
                 </div>
                 <p className="description-full">{ticket.description}</p>
+                {ticket.image && (
+                  <section className="action-section">
+                    <Text as="h2" variant="headline">Imagem do chamado</Text>
+                    {erroImagem ? (
+                      <p role="alert">{erroImagem}</p>
+                    ) : urlImagem ? (
+                      <a href={urlImagem} target="_blank" rel="noreferrer" aria-label="Ampliar imagem do chamado">
+                        <img
+                          src={urlImagem}
+                          alt="Imagem enviada pelo solicitante"
+                          style={{ maxWidth: "100%", maxHeight: 360, objectFit: "contain", borderRadius: 8 }}
+                        />
+                      </a>
+                    ) : (
+                      <p className="muted">Carregando imagem…</p>
+                    )}
+                  </section>
+                )}
                 {ticket.returnReason && (
                   <div className="notice warning">
                     <strong>Motivo do retorno</strong>

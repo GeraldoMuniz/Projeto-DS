@@ -103,6 +103,7 @@ model Ticket {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   messages     TicketMessage[]
+  image        TicketImage?
   periodicId   Int?
   periodic     PeriodicMaintenance? @relation(fields: [periodicId], references: [id])
   scheduledDate DateTime?      @db.Date
@@ -160,4 +161,14 @@ model PeriodicRequest {
 
   @@index([team, status])
   @@map("periodic_requests")
+}
+
+model TicketImage {
+  ticketId Int    @id
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  mimeType String @db.VarChar(30)
+  size     Int
+  data     Bytes
+
+  @@map("ticket_images")
 }

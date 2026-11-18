@@ -7,10 +7,11 @@ import { TicketDetail } from "./TicketDetail";
 const mocks = vi.hoisted(() => ({
   useTicket: vi.fn(),
   action: vi.fn(),
+  image: vi.fn(),
   reload: vi.fn(),
 }));
 vi.mock("../useTickets", () => ({ useTicket: mocks.useTicket }));
-vi.mock("../ticket.service", () => ({ ticketService: { action: mocks.action } }));
+vi.mock("../ticket.service", () => ({ ticketService: { action: mocks.action, image: mocks.image } }));
 vi.mock("../../../components/auth/Can", () => ({
   Can: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -111,4 +112,14 @@ describe("Resultado da conclusão do chamado", () => {
     expect(result.parentElement).not.toHaveClass("success");
     expect(screen.getByText(/Concluído em/)).toBeInTheDocument();
   });
+  it("exibe a imagem do chamado para a equipe responsável", async () => {
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:imagem-do-chamado") });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    mocks.image.mockResolvedValue(new Blob(["imagem"], { type: "image/png" }));
+    show("equipe", { image: { mimeType: "image/png", size: 6 } });
+    const img = await screen.findByRole("img", { name: "Imagem enviada pelo solicitante" });
+    expect(img).toHaveAttribute("src", "blob:imagem-do-chamado");
+    expect(mocks.image).toHaveBeenCalledWith(42, expect.any(AbortSignal));
+  });
+
 });

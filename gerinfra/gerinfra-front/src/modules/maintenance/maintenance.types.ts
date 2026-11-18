@@ -58,6 +58,7 @@ export interface Ticket {
   createdAt: string;
   requesterName: string;
   periodicId: number | null;
+  image?: { mimeType: string; size: number } | null;
   messages?: {
     id: number;
     sender: string;
