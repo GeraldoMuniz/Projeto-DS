@@ -1,0 +1,240 @@
+{
+  "realm": "Local",
+  "enabled": true,
+  "sslRequired": "external",
+  "defaultSignatureAlgorithm": "RS256",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "sys_gerinfra-admin",
+        "description": "Acesso total (AccessRole.ADMIN)",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "sys_gerinfra-users",
+        "description": "Acesso padrão (AccessRole.USER)",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "offline_access",
+        "description": "${role_offline-access}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "uma_authorization",
+        "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "default-roles-gerinfra",
+        "description": "${role_default-roles}",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "offline_access",
+            "uma_authorization"
+          ],
+          "client": {
+            "account": [
+              "view-profile",
+              "manage-account"
+            ]
+          }
+        },
+        "clientRole": false,
+        "containerId": "gerinfra",
+        "attributes": {}
+      },
+      {
+        "name": "sys_gerinfra-team",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-eletrica",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-hidraulica",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-refrigeracao",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-ti-rede",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      },
+      {
+        "name": "sys_gerinfra-team-mobiliario",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "gerinfra"
+      }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-gerinfra",
+    "description": "${role_default-roles}",
+    "composite": true,
+    "clientRole": false,
+    "containerId": "gerinfra"
+  },
+  "requiredCredentials": [
+    "password"
+  ],
+  "users": [],
+  "clients": [
+    {
+      "clientId": "gerinfra-back",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "adminUrl": "http://localhost:3000",
+      "redirectUris": [],
+      "webOrigins": [],
+      "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "name": "Client Host",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientHost",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientHost",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "Client ID",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientId",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientId",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "Client IP Address",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientAddress",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientAddress",
+            "jsonType.label": "String"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "gerinfra-front",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "https://gerinfra-front-neto.vercel.app",
+      "adminUrl": "http://localhost:5173",
+      "redirectUris": [
+        "https://gerinfra-front-neto.vercel.app/*"
+      ],
+      "webOrigins": [
+        "https://gerinfra-front-neto.vercel.app"
+      ],
+      "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "name": "audience-gerinfra-back",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "gerinfra-back",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://gerinfra-front-neto.vercel.app/*"
+      },
+      "baseUrl": "/"
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "role_list",
+    "profile",
+    "email",
+    "roles",
+    "web-origins",
+    "acr"
+  ],
+  "defaultOptionalClientScopes": [
+    "offline_access",
+    "address",
+    "phone",
+    "microprofile-jwt"
+  ]
+}
