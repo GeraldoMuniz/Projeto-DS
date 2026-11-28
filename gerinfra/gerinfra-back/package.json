@@ -1,14 +1,14 @@
 {
   "name": "gerinfra",
   "version": "1.0.0",
-  "description": "Gest\u00e3o de manuten\u00e7\u00e3o predial do CIn-UFPE",
+  "description": "Gestão de manutenção predial do CIn-UFPE",
   "private": true,
   "license": "MIT",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
-    "start:prod": "node dist/main",
+    "start:prod": "npm run migration:run && node dist/main",
     "start:debug": "nest start --debug --watch",
     "lint": "biome check --write src/ test/",
     "lint:ci": "biome ci src/ test/",

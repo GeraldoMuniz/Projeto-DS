@@ -17,7 +17,14 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1',
   });
-  app.enableCors();
+  // Restringe origens em producao e mantem o Docker local sem alteracoes.
+  const origins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  app.enableCors({
+    origin: origins.length > 0 ? origins : process.env.NODE_ENV === 'production' ? false : true,
+  });
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
